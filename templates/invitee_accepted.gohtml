@@ -1,0 +1,16 @@
+{{ template "header" . }}
+  <p>CARTOON HERE</p>
+  <br>
+  <h3>Hooray! We'll see you at the wedding {{ .Invitee.Name }}!</h3>
+  <br>
+  <h4>Here are the details you provided in case you need to see them again:</h4>
+  <p>Email: {{ .Invitee.Email }}</p>
+  <p>Phone Number: {{ .Invitee.PhoneNumber }}</p>
+  {{ if .Invitee.DietaryRequirements }}
+  <p>Dietary Requirements: {{ .Invitee.DietaryRequirements }}</p>
+  {{ else }}
+  <p>Dietary Requirements: None</p>
+  {{ end }}
+  <br>
+  <p><a href="/change-details">You can change your details here</a> and if you can no longer make it you can <a href="/change-attendance-response">let us know here</a></p>
+{{ template "footer" . }}

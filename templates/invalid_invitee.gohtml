@@ -1,0 +1,18 @@
+{{ template "header" . }}
+  <p>CARTOON HERE</p>
+  <br>
+  <p>YOUR INVITE CODE IS NOT VALID. PLEASE TRY AGAIN.</p>
+  <br>
+  <h3>Please fill in the form below to confirm your attendance:</h3>
+  <form action="/rsvp" method="get">
+    <label for="invitee-code">Your unique invitee code:</label><br>
+    <input type="text" id="invitee-code" name="invitee-code"><br>
+    <label for="attendance">Attendance:</label><br>
+    <input type="radio" id="yes" name="attendance" value="true" />
+	<label for="yes">I will be there! </label>
+	<br>
+    <input type="radio" id="no" name="attendance" value="false" />
+	<label for="no">I'm afraid I can't make it.</label>
+    <input type="submit" value="Submit">
+  </form>
+{{ template "footer" . }}

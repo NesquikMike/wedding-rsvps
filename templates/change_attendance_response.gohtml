@@ -1,0 +1,15 @@
+{{ template "header" . }}
+  <p>CARTOON HERE</p>
+  <br>
+  <h3>So you need to change your RSVP, we hope you can still make it!</h3>
+  <br>
+  <form action="/rsvp" method="get">
+    <label for="attendance">Attendance:</label><br>
+    <input type="radio" id="yes" name="attendance" value="true" />
+	<label for="yes">I will be there! </label>
+	<br>
+    <input type="radio" id="no" name="attendance" value="false" />
+	<label for="no">I'm afraid I can't make it.</label>
+    <input type="submit" value="Submit">
+  </form>
+{{ template "footer" . }}

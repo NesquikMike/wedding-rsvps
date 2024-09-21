@@ -1,0 +1,18 @@
+{{ define "footer" }}
+  <p>{{ .PartnerOne }} & {{ .PartnerTwo }} prefer to receive cash gifts.</p>
+  <br>
+  <p>If you would like to gift a contribution to {{ .PartnerOne }} & {{ .PartnerTwo }}'s honeymoon you can transfer to this account:</p>
+  <br>
+  <p>Bank: {{ .BankName }}</p>
+  <p>Name: {{ .BankAccountName }}</p>
+  <p>Sort Code: {{ .BankSortCode }}</p>
+  <p>Account Number: {{ .BankAccountNumber }}</p>
+  <br>
+  <p>You can also gift cash on the day if you prefer.</p>
+  <br>
+  <p>Many Thanks!</p>
+  <br>
+  <p>{{ .FooterMessage }} Built by <a href="https://michaelgv.uk">Michael Gomes Vieira</a></p>
+</body>
+</html>
+{{ end }}

@@ -1,0 +1,14 @@
+{{ template "header" . }}
+  <p>We're thrilled that you can make it!</p>
+  <br>
+  <h3>Please fill in your details below so that we can keep in touch and satisfy any dietary requirements:</h3>
+  <form action="/invitee-details" method="get">
+    <label for="email">Your email address:</label><br>
+    <input type="text" id="email" name="email"><br>
+    <label for="phone-number">Your phone number:</label><br>
+    <input type="text" id="phone-number" name="phone-number"><br>
+    <label for="dietary-requirements">Any dietary requirements:</label><br>
+    <input type="text" id="dietary-requirements" name="dietary-requirements"><br>
+    <input type="submit" value="Submit">
+  </form>
+{{ template "footer" . }}

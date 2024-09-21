@@ -1,0 +1,42 @@
+{{ define "header" }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>{{ .PartnerOne }} & {{ .PartnerTwo }} Wedding Invitation</title>
+
+  <link rel="stylesheet" href="/assets/css/styles.css">
+
+  <meta name="description" content="{{ .PartnerOne }} & {{ .PartnerTwo }} Wedding Invitation">
+  <meta property="og:title" content="{{ .PartnerOne }} & {{ .PartnerTwo }} Wedding Invitation">
+  <meta property="og:description" content="{{ .PartnerOne }} & {{ .PartnerTwo }} Wedding Invitation">
+  <meta property="og:image" content="/assets/image.jpg">
+  <meta property="og:locale" content="en_GB">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <meta property="og:url" content="{{ .Url }}">
+  <link rel="canonical" href="{{ .Url }}">
+
+  <link rel="icon" href="/favicon.ico">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/my.webmanifest">
+  <meta name="theme-color" content="#D01A1E">
+
+  <style>
+    table, th, td {
+      border: 1px solid black;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>You're invited to {{ .PartnerOne }} & {{ .PartnerTwo }}'s Wedding!</h1>
+  <br>
+  <h2>{{ .Date }}</h2>
+  <br>
+  <h3>{{ .Venue }} from {{ .TimeStart }}</h3>
+  <br>
+{{ end }}
