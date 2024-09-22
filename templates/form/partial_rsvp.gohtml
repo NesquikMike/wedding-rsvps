@@ -1,0 +1,6 @@
+{{ define "form_partial_rsvp" }}
+  <form action="/rsvp" method="post">
+{{ template "form_rsvp_attendance_options" . }}
+    <input type="submit" value="Submit">
+  </form>
+{{ end }}

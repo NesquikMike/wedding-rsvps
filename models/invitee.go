@@ -8,4 +8,5 @@ type Invitee struct {
 	DietaryRequirements string
 	Attendance          bool
 	DetailsProvided     bool
+	FormCompleted       bool
 }

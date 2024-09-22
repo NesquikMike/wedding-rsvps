@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"time"
 	"errors"
 	"fmt"
 	"github.com/nesquikmike/wedding-rsvps/models"
@@ -19,6 +20,10 @@ var inviteeStore = map[string]*models.Invitee{
 	"Luis-2nD": &models.Invitee{
 		Name: "Luis",
 		Code: "Luis-2nD",
+	},
+	"Beth-3Rd": &models.Invitee{
+		Name: "Beth",
+		Code: "Beth-3Rd",
 	},
 }
 
@@ -71,12 +76,15 @@ func (c Controller) RSVP(w http.ResponseWriter, req *http.Request) {
 	attendance := req.FormValue("attendance")
 	if attendance == "true" {
 		invitee.Attendance = true
-
+		if invitee.DetailsProvided {
+			http.Redirect(w, req, "/", http.StatusFound)
+		}
 		c.tpl.ExecuteTemplate(w, "invitee_details.gohtml", c.viewData)
 		return
 	}
 
 	invitee.Attendance = false
+	invitee.FormCompleted = true
 
 	c.tpl.ExecuteTemplate(w, "invitee_declined.gohtml", c.viewData)
 }
@@ -133,6 +141,7 @@ func (c Controller) InviteeDetails(w http.ResponseWriter, req *http.Request) {
 	invitee.PhoneNumber = phoneNumber
 	invitee.DietaryRequirements = dietaryRequirements
 	invitee.DetailsProvided = true
+	invitee.FormCompleted = true
 
 	c.viewData.Invitee = invitee
 
@@ -152,6 +161,7 @@ func (c Controller) ChangeDetails(w http.ResponseWriter, req *http.Request) {
 	}
 
 	invitee.DetailsProvided = false
+	invitee.FormCompleted = false
 	c.viewData.Invitee = invitee
 
 	c.tpl.ExecuteTemplate(w, "invitee_details.gohtml", c.viewData)
@@ -174,6 +184,9 @@ func (c Controller) ChangeAttendanceResponse(w http.ResponseWriter, req *http.Re
 
 func (c Controller) Index(w http.ResponseWriter, req *http.Request) {
 	invitee, err := c.getInvitee(w, req)
+	if invitee == nil {
+		c.viewData.Invitee = nil
+	}
 	if err != nil {
 		if err != http.ErrNoCookie && errors.Unwrap(err) != InvalidInviteeError {
 			c.logger.Println(err)
@@ -199,5 +212,17 @@ func (c Controller) Index(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	c.tpl.ExecuteTemplate(w, "index.gohtml", c.viewData)
+}
+
+func (c Controller) ResetInvitee(w http.ResponseWriter, req *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name: "session_token",
+		Value: "",
+		Expires: time.Now(),
+	})
+	c.viewData.Invitee = nil
+
+	http.Redirect(w, req, "/", http.StatusFound)
 	c.tpl.ExecuteTemplate(w, "index.gohtml", c.viewData)
 }

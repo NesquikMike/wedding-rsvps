@@ -1,16 +1,21 @@
 {{ template "header" . }}
-  <p>CARTOON HERE</p>
-  <br>
-  <h3>Hooray! We'll see you at the wedding {{ .Invitee.Name }}!</h3>
-  <br>
+  <h3>You've confirmed you can attend, hooray! We'll see you at the wedding {{ .Invitee.Name }}!</h3>
+  <p>The venue address is {{ .VenueAddress }}</p>
+  <p>{{ .VenueTravelDetails }}</p>
+  <h4>Itinerary:</h4>
+  <p>
+    Time of Arrival: {{ .TimeArrival }}<br>
+	Ceremony Begins: {{ .TimeStart }}<br>
+	{{ .PostCeremonyItinerary }}
+  </p>
   <h4>Here are the details you provided in case you need to see them again:</h4>
-  <p>Email: {{ .Invitee.Email }}</p>
-  <p>Phone Number: {{ .Invitee.PhoneNumber }}</p>
+  <p>Email: {{ .Invitee.Email }}<br>
+  Phone Number: {{ .Invitee.PhoneNumber }}<br>
   {{ if .Invitee.DietaryRequirements }}
-  <p>Dietary Requirements: {{ .Invitee.DietaryRequirements }}</p>
+  Dietary Requirements: {{ .Invitee.DietaryRequirements }}</p>
   {{ else }}
-  <p>Dietary Requirements: None</p>
+  Dietary Requirements: None</p>
   {{ end }}
-  <br>
-  <p><a href="/change-details">You can change your details here</a> and if you can no longer make it you can <a href="/change-attendance-response">let us know here</a></p>
+  <p><a href="/change-details">You can change your details here</a> and if you can no longer make it you can <a href="/change-attendance-response">let us know here</a>.</p>
+  <p><a href="/reset-invitee">Click here if you need to RSVP for someone else.</a></p>
 {{ template "footer" . }}
