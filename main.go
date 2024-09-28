@@ -2,9 +2,10 @@ package main
 
 import (
 	"bufio"
+	"encoding/hex"
 	"fmt"
-	"github.com/nesquikmike/wedding-rsvps/controllers"
-	"github.com/nesquikmike/wedding-rsvps/models"
+	"github.com/nesquikmike/wedding-rsvps/internal/controllers"
+	"github.com/nesquikmike/wedding-rsvps/internal/models"
 	"html/template"
 	"log"
 	"net/http"
@@ -13,6 +14,8 @@ import (
 )
 
 var tpl *template.Template
+
+const requiredLenSecretCookieKey = 32
 
 func init() {
 	tpl = template.Must(template.ParseGlob("templates/*.gohtml"))
@@ -39,6 +42,17 @@ func main() {
 		envVars[k] = v
 	}
 
+	secretCookieKey, err := hex.DecodeString(envVars["SECRET_COOKIE_KEY"])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	isProd := envVars["ENVIRONMENT"] == "production"
+
+	if len(secretCookieKey) != requiredLenSecretCookieKey {
+		log.Fatal(fmt.Errorf("secretCookieKey is %v bytes long when it should be %v", len(secretCookieKey), requiredLenSecretCookieKey))
+	}
+
 	viewData := models.ViewData{
 		Url:                   envVars["URL"],
 		PartnerOne:            envVars["PARTNER_ONE"],
@@ -58,7 +72,7 @@ func main() {
 		FooterMessage:         template.HTML(strings.ReplaceAll(envVars["FOOTER_MESSAGE"], "\\", "")),
 	}
 
-	c := controllers.NewController(tpl, log.Default(), &viewData)
+	c := controllers.NewController(isProd, tpl, log.Default(), &viewData, secretCookieKey)
 
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
 	http.HandleFunc("/", c.Index)
