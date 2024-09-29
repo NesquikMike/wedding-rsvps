@@ -1,21 +1,29 @@
 package main
 
 import (
+	"encoding/csv"
 	"bufio"
+	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"github.com/nesquikmike/wedding-rsvps/internal/controllers"
+	"github.com/nesquikmike/wedding-rsvps/internal/database"
 	"github.com/nesquikmike/wedding-rsvps/internal/models"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var tpl *template.Template
 
-const requiredLenSecretCookieKey = 32
+const (
+	requiredLenSecretCookieKey = 32
+	csvPath = "./names.csv"
+)
 
 func init() {
 	tpl = template.Must(template.ParseGlob("templates/*.gohtml"))
@@ -53,6 +61,24 @@ func main() {
 		log.Fatal(fmt.Errorf("secretCookieKey is %v bytes long when it should be %v", len(secretCookieKey), requiredLenSecretCookieKey))
 	}
 
+	// Open the SQLite database (creates the file if it doesn't exist)
+	db, err := sql.Open("sqlite3", "./invitees.db")
+	if err != nil {
+		log.Fatal("Error opening up database: ", err)
+	}
+	defer db.Close()
+
+	rows, err := readCSV(csvPath)
+	if err != nil {
+		log.Fatal("Error reading csv: ", err)
+	}
+
+	inviteeStore := database.NewInviteeStore(db)
+	err = inviteeStore.SetupDatabase(rows)
+	if err != nil {
+		log.Fatal("Error setting up database: ", err)
+	}
+
 	viewData := models.ViewData{
 		Url:                   envVars["URL"],
 		PartnerOne:            envVars["PARTNER_ONE"],
@@ -72,7 +98,7 @@ func main() {
 		FooterMessage:         template.HTML(strings.ReplaceAll(envVars["FOOTER_MESSAGE"], "\\", "")),
 	}
 
-	c := controllers.NewController(isProd, tpl, log.Default(), &viewData, secretCookieKey)
+	c := controllers.NewController(isProd, tpl, inviteeStore, log.Default(), &viewData, secretCookieKey)
 
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
 	http.HandleFunc("/", c.Index)
@@ -83,4 +109,20 @@ func main() {
 	http.HandleFunc("/reset-invitee", c.ResetInvitee)
 	http.Handle("/favicon.ico", http.NotFoundHandler())
 	http.ListenAndServe(":8080", nil)
+}
+
+func readCSV(filePath string) ([][]string, error) {
+    file, err := os.Open(filePath)
+    if err != nil {
+        return nil, err
+    }
+    defer file.Close()
+
+    reader := csv.NewReader(file)
+    records, err := reader.ReadAll()
+    if err != nil {
+        return nil, err
+    }
+
+    return records, nil
 }
