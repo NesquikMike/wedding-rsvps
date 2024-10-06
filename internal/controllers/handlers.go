@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/nesquikmike/wedding-rsvps/internal/cookies"
-	"github.com/nesquikmike/wedding-rsvps/internal/models"
 	"github.com/nesquikmike/wedding-rsvps/internal/database"
+	"github.com/nesquikmike/wedding-rsvps/internal/models"
 	"html/template"
 	"log"
 	"net/http"
@@ -171,6 +171,7 @@ func (c Controller) ChangeDetails(w http.ResponseWriter, req *http.Request) {
 	}
 
 	c.viewData.Invitee = invitee
+	c.inviteeStore.UpdatePageVisit(invitee.ID, "change-details")
 
 	c.tpl.ExecuteTemplate(w, "invitee_details.gohtml", c.viewData)
 }
@@ -191,6 +192,8 @@ func (c Controller) ChangeAttendanceResponse(w http.ResponseWriter, req *http.Re
 	if err := cookies.WriteEncrypted(w, inviteeCookie, c.secretCookieKey); err != nil {
 		c.logger.Printf("for invitee %v could not write invitee cookie: %v\n", invitee.Code, err)
 	}
+	c.viewData.Invitee = invitee
+	c.inviteeStore.UpdatePageVisit(invitee.ID, "change-attendance-response")
 
 	c.tpl.ExecuteTemplate(w, "change_attendance_response.gohtml", c.viewData)
 }
@@ -224,17 +227,17 @@ func (c Controller) Index(w http.ResponseWriter, req *http.Request) {
 		c.viewData.Invitee = invitee
 
 		switch {
-		case invitee.Attendance && invitee.DetailsProvided:
-			c.tpl.ExecuteTemplate(w, "invitee_accepted.gohtml", c.viewData)
+		case !invitee.Attendance:
+			c.inviteeStore.UpdatePageVisit(invitee.ID, "invitee-declined")
+			c.tpl.ExecuteTemplate(w, "invitee_declined.gohtml", c.viewData)
 			return
-		case invitee.Attendance && invitee.InvalidDetails:
+		case !invitee.DetailsProvided || invitee.InvalidDetails:
+			c.inviteeStore.UpdatePageVisit(invitee.ID, "invitee-details")
 			c.tpl.ExecuteTemplate(w, "invalid_details.gohtml", c.viewData)
 			return
-		case invitee.Attendance && !invitee.DetailsProvided:
-			c.tpl.ExecuteTemplate(w, "invitee_details.gohtml", c.viewData)
-			return
 		default:
-			c.tpl.ExecuteTemplate(w, "invitee_declined.gohtml", c.viewData)
+			c.inviteeStore.UpdatePageVisit(invitee.ID, "invitee-accepted")
+			c.tpl.ExecuteTemplate(w, "invitee_accepted.gohtml", c.viewData)
 			return
 		}
 	}

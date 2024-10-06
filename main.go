@@ -1,9 +1,9 @@
 package main
 
 import (
-	"encoding/csv"
 	"bufio"
 	"database/sql"
+	"encoding/csv"
 	"encoding/hex"
 	"fmt"
 	"github.com/nesquikmike/wedding-rsvps/internal/controllers"
@@ -22,7 +22,7 @@ var tpl *template.Template
 
 const (
 	requiredLenSecretCookieKey = 32
-	csvPath = "./names.csv"
+	csvPath                    = "./names.csv"
 )
 
 func init() {
@@ -112,17 +112,17 @@ func main() {
 }
 
 func readCSV(filePath string) ([][]string, error) {
-    file, err := os.Open(filePath)
-    if err != nil {
-        return nil, err
-    }
-    defer file.Close()
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
 
-    reader := csv.NewReader(file)
-    records, err := reader.ReadAll()
-    if err != nil {
-        return nil, err
-    }
+	reader := csv.NewReader(file)
+	records, err := reader.ReadAll()
+	if err != nil {
+		return nil, err
+	}
 
-    return records, nil
+	return records, nil
 }

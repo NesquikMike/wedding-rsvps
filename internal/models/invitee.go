@@ -3,6 +3,7 @@ package models
 const InvalidInviteeKey = "invalid_invitee"
 
 type Invitee struct {
+	ID                  int
 	Name                string
 	Code                string
 	Email               string
