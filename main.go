@@ -1,20 +1,22 @@
 package main
 
 import (
-	"io"
 	"bufio"
 	"database/sql"
 	"encoding/csv"
 	"encoding/hex"
 	"fmt"
-	"github.com/nesquikmike/wedding-rsvps/internal/controllers"
-	"github.com/nesquikmike/wedding-rsvps/internal/database"
-	"github.com/nesquikmike/wedding-rsvps/internal/models"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/nesquikmike/wedding-rsvps/internal/controllers"
+	"github.com/nesquikmike/wedding-rsvps/internal/database"
+	"github.com/nesquikmike/wedding-rsvps/internal/models"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -53,14 +55,11 @@ func main() {
 
 	isProd := envVars["ENVIRONMENT"] == "production"
 
-	logFile, err := os.OpenFile("server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	logFile, err := setNewLogFile(nil)
 	if err != nil {
 		log.Fatalf("error opening log file: %v", err)
 	}
 	defer logFile.Close()
-
-	multiWriter := io.MultiWriter(os.Stdout, logFile)
-	log.SetOutput(multiWriter)
 
 	secretCookieKey, err := hex.DecodeString(envVars["SECRET_COOKIE_KEY"])
 	if err != nil {
@@ -135,4 +134,40 @@ func readCSV(filePath string) ([][]string, error) {
 	}
 
 	return records, nil
+}
+
+func setNewLogFile(oldFile *os.File) (*os.File, error) {
+	oldFile.Close()
+
+	logFileName := fmt.Sprintf("server_%s.log", time.Now().Format("2006-01-02"))
+	logFile, err := os.OpenFile(logFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		return logFile, err
+	}
+	defer logFile.Close()
+
+	multiWriter := io.MultiWriter(os.Stdout, logFile)
+	log.SetOutput(multiWriter)
+
+	return logFile, nil
+}
+
+func startMidnightTicker(oldLogFile *os.File) {
+	serverStart := time.Now()
+	firstMidnight := serverStart.Truncate(24 * time.Hour).Add(24 * time.Hour)
+	durationUntilFirstMidnight := firstMidnight.Sub(serverStart)
+
+	time.Sleep(durationUntilFirstMidnight)
+
+	ticker := time.NewTicker(24 * time.Hour)
+	defer ticker.Stop()
+
+	logFile, err := setNewLogFile(oldLogFile)
+	if err != nil {
+		log.Fatalf("error opening log file: %v", err)
+	}
+
+	for range ticker.C {
+		logFile, err = setNewLogFile(logFile)
+	}
 }

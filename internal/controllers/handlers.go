@@ -3,20 +3,21 @@ package controllers
 import (
 	"errors"
 	"fmt"
-	"github.com/nesquikmike/wedding-rsvps/internal/cookies"
-	"github.com/nesquikmike/wedding-rsvps/internal/database"
-	"github.com/nesquikmike/wedding-rsvps/internal/models"
 	"html/template"
 	"log"
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/nesquikmike/wedding-rsvps/internal/cookies"
+	"github.com/nesquikmike/wedding-rsvps/internal/database"
+	"github.com/nesquikmike/wedding-rsvps/internal/models"
 )
 
 type Controller struct {
 	isProd          bool
 	tpl             *template.Template
-	guestStore    database.GuestStore
+	guestStore      database.GuestStore
 	logger          *log.Logger
 	viewData        *models.ViewData
 	secretCookieKey []byte
@@ -26,7 +27,7 @@ func NewController(isProd bool, t *template.Template, guestStore database.GuestS
 	return &Controller{
 		isProd:          isProd,
 		tpl:             t,
-		guestStore:    guestStore,
+		guestStore:      guestStore,
 		logger:          logger,
 		viewData:        viewData,
 		secretCookieKey: secretCookieKey,
@@ -231,9 +232,13 @@ func (c Controller) Index(w http.ResponseWriter, req *http.Request) {
 			c.guestStore.UpdatePageVisit(guest.ID, "guest-declined")
 			c.tpl.ExecuteTemplate(w, "guest_declined.gohtml", c.viewData)
 			return
-		case !guest.DetailsProvided || guest.InvalidDetails:
+		case guest.InvalidDetails:
 			c.guestStore.UpdatePageVisit(guest.ID, "guest-details")
 			c.tpl.ExecuteTemplate(w, "invalid_details.gohtml", c.viewData)
+			return
+		case !guest.DetailsProvided:
+			c.guestStore.UpdatePageVisit(guest.ID, "guest-details")
+			c.tpl.ExecuteTemplate(w, "guest_details.gohtml", c.viewData)
 			return
 		default:
 			c.guestStore.UpdatePageVisit(guest.ID, "guest-accepted")

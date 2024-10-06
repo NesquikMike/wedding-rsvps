@@ -21,5 +21,5 @@ type ViewData struct {
 	BankSortCode          string
 	BankAccountNumber     string
 	FooterMessage         template.HTML
-	Guest               *Guest
+	Guest                 *Guest
 }
