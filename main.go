@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"bufio"
 	"database/sql"
 	"encoding/csv"
@@ -50,12 +51,21 @@ func main() {
 		envVars[k] = v
 	}
 
+	isProd := envVars["ENVIRONMENT"] == "production"
+
+	logFile, err := os.OpenFile("server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening log file: %v", err)
+	}
+	defer logFile.Close()
+
+	multiWriter := io.MultiWriter(os.Stdout, logFile)
+	log.SetOutput(multiWriter)
+
 	secretCookieKey, err := hex.DecodeString(envVars["SECRET_COOKIE_KEY"])
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	isProd := envVars["ENVIRONMENT"] == "production"
 
 	if len(secretCookieKey) != requiredLenSecretCookieKey {
 		log.Fatal(fmt.Errorf("secretCookieKey is %v bytes long when it should be %v", len(secretCookieKey), requiredLenSecretCookieKey))

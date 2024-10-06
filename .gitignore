@@ -1,3 +1,4 @@
 .env
 *.db
 names.csv
+server.log

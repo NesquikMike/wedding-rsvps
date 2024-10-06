@@ -20,7 +20,7 @@ func (i InviteeStore) createPageVisitsTable() error {
 		return err
 	}
 
-	log.Println("Database and table set up and populated successfully!")
+	log.Println("page_visit table set up and populated successfully!")
 	return nil
 }
 
