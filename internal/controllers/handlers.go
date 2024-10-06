@@ -44,6 +44,7 @@ func (c Controller) RSVP(w http.ResponseWriter, req *http.Request) {
 			guestCode := req.FormValue("guest-code")
 			re := regexp.MustCompile(`^[A-Z][a-z]+-[A-Za-z0-9]+$`)
 			if len(guestCode) != 12 || !re.MatchString(guestCode) {
+				c.logger.Printf("invalid code %s was used\n", guestCode)
 				invalidGuestCookie := cookies.GenerateCookie(cookies.SessionTokenName, models.InvalidGuestKey, c.isProd)
 				if err := cookies.WriteEncrypted(w, invalidGuestCookie, c.secretCookieKey); err != nil {
 					c.logger.Printf("could not write invalid guest cookie: %v\n", err)
@@ -54,6 +55,7 @@ func (c Controller) RSVP(w http.ResponseWriter, req *http.Request) {
 
 			i, err := c.guestStore.GetGuest(guestCode)
 			if i == nil || guestCode == "" {
+				c.logger.Printf("invalid code %s was used\n", guestCode)
 				invalidGuestCookie := cookies.GenerateCookie(cookies.SessionTokenName, models.InvalidGuestKey, c.isProd)
 				if err := cookies.WriteEncrypted(w, invalidGuestCookie, c.secretCookieKey); err != nil {
 					c.logger.Printf("could not write invalid guest cookie: %v\n", err)
@@ -226,8 +228,16 @@ func (c Controller) Index(w http.ResponseWriter, req *http.Request) {
 			c.logger.Printf("for guest %v could not write guest cookie: %v\n", guest.Code, err)
 		}
 		c.viewData.Guest = guest
+		c.logger.Printf("guest %s hit index", guest.Code)
 
 		switch {
+		case !guest.FormStarted:
+			blankCookie := cookies.GenerateBlankCookie(cookies.SessionTokenName, c.isProd)
+			http.SetCookie(w, blankCookie)
+			c.viewData.Guest = nil
+
+			c.tpl.ExecuteTemplate(w, "index.gohtml", c.viewData)
+			return
 		case !guest.Attendance:
 			c.guestStore.UpdatePageVisit(guest.ID, "guest-declined")
 			c.tpl.ExecuteTemplate(w, "guest_declined.gohtml", c.viewData)
@@ -255,5 +265,4 @@ func (c Controller) ResetGuest(w http.ResponseWriter, req *http.Request) {
 	c.viewData.Guest = nil
 
 	http.Redirect(w, req, "/", http.StatusFound)
-	c.tpl.ExecuteTemplate(w, "index.gohtml", c.viewData)
 }

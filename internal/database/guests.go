@@ -51,6 +51,7 @@ func (i GuestStore) createGuestsTable(guestNames [][]string) error {
         attendance BOOLEAN,
         invalid_details BOOLEAN,
         details_provided BOOLEAN,
+        form_started BOOLEAN NOT NULL,
         form_completed BOOLEAN
     );`
 
@@ -102,7 +103,7 @@ func (i GuestStore) insertGuest(name string) error {
 	randCharsLen := codeLen - len(firstName) - 1
 	code := firstName + "-" + generatePseudorandomString(guestKey, randCharsLen)
 
-	insertQuery := `INSERT INTO guests (name, code) VALUES (?, ?)`
+	insertQuery := `INSERT INTO guests (name, code, form_started) VALUES (?, ?, false)`
 	_, err = i.db.Exec(insertQuery, name, code)
 	return err
 }
@@ -137,7 +138,7 @@ func (i GuestStore) UpdateGuestDetails(code, email, phoneNumber, dietaryRequirem
 
 func (i GuestStore) UpdateGuestAttendance(code string, attendance, formCompleted bool) error {
 	query := `UPDATE guests
-              SET attendance = ?, form_completed = ?
+              SET attendance = ?, form_started = true, form_completed = ?
               WHERE code = ?`
 
 	result, err := i.db.Exec(query, attendance, formCompleted, code)
@@ -204,6 +205,7 @@ func (i GuestStore) GetGuest(code string) (*models.Guest, error) {
 		attendance,
 		invalid_details,
 		details_provided,
+		form_started,
 		form_completed 
 	FROM guests WHERE code = ?`
 
@@ -232,6 +234,7 @@ func (i GuestStore) GetGuest(code string) (*models.Guest, error) {
 		&attendance,
 		&invalidDetails,
 		&detailsProvided,
+		&guest.FormStarted,
 		&formCompleted,
 	)
 

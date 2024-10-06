@@ -12,6 +12,7 @@ type Guest struct {
 	Attendance          bool
 	InvalidDetails      bool
 	DetailsProvided     bool
+	FormStarted       bool
 	FormCompleted       bool
 }
 

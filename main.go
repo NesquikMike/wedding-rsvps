@@ -88,6 +88,8 @@ func main() {
 		log.Fatal("Error setting up database: ", err)
 	}
 
+	go startMidnightTicker(logFile)
+
 	viewData := models.ViewData{
 		Url:                   envVars["URL"],
 		PartnerOne:            envVars["PARTNER_ONE"],
@@ -139,15 +141,22 @@ func readCSV(filePath string) ([][]string, error) {
 func setNewLogFile(oldFile *os.File) (*os.File, error) {
 	oldFile.Close()
 
-	logFileName := fmt.Sprintf("server_%s.log", time.Now().Format("2006-01-02"))
+	err := os.MkdirAll("logs", os.ModePerm)
+	if err != nil {
+		log.Println("error creating logs folder: ", err)
+		return nil, err
+	}
+
+	logFileName := fmt.Sprintf("logs/server_%s.log", time.Now().Format("2006-01-02"))
 	logFile, err := os.OpenFile(logFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		return logFile, err
 	}
-	defer logFile.Close()
 
 	multiWriter := io.MultiWriter(os.Stdout, logFile)
 	log.SetOutput(multiWriter)
+
+	log.Println("new logger set")
 
 	return logFile, nil
 }
@@ -170,4 +179,6 @@ func startMidnightTicker(oldLogFile *os.File) {
 	for range ticker.C {
 		logFile, err = setNewLogFile(logFile)
 	}
+
+	defer logFile.Close()
 }
