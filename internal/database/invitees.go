@@ -256,8 +256,6 @@ func (i InviteeStore) GetInvitee(code string) (*models.Invitee, error) {
 	if formCompleted.Valid {
 		invitee.FormCompleted = formCompleted.Bool
 	}
-	fmt.Println("invitee: ", invitee)
-	fmt.Println("err: ", err)
 
 	if err == sql.ErrNoRows {
 		return nil, nil // No guest found with the given ID
