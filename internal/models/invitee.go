@@ -1,8 +1,8 @@
 package models
 
-const InvalidInviteeKey = "invalid_invitee"
+const InvalidGuestKey = "invalid_guest"
 
-type Invitee struct {
+type Guest struct {
 	ID                  int
 	Name                string
 	Code                string
@@ -15,7 +15,7 @@ type Invitee struct {
 	FormCompleted       bool
 }
 
-var InvalidInvitee = Invitee{
-	Code:           InvalidInviteeKey,
+var InvalidGuest = Guest{
+	Code:           InvalidGuestKey,
 	InvalidDetails: true,
 }

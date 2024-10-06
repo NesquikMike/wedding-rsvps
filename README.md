@@ -1,2 +1,2 @@
 # wedding-rsvps
-A small web site to accept RSVPs for invitees to a wedding
+A small web site to accept RSVPs for guests to a wedding

@@ -1,7 +1,7 @@
 {{ define "form_full_rsvp" }}
   <form action="/rsvp" method="post">
-    <label for="invitee-code" class="form-label">Your unique invitee code:</label><br>
-    <input type="text" id="invitee-code" name="invitee-code"><br>
+    <label for="guest-code" class="form-label">Your unique guest code:</label><br>
+    <input type="text" id="guest-code" name="guest-code"><br>
 {{ template "form_rsvp_attendance_options" . }}
     <input type="submit" value="Submit">
   </form>

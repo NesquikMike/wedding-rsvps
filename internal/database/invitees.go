@@ -17,16 +17,16 @@ const (
 	codeLen = 12
 )
 
-type InviteeStore struct {
+type GuestStore struct {
 	db *sql.DB
 }
 
-func NewInviteeStore(db *sql.DB) InviteeStore {
-	return InviteeStore{db: db}
+func NewGuestStore(db *sql.DB) GuestStore {
+	return GuestStore{db: db}
 }
 
-func (i InviteeStore) SetupDatabase(inviteeNames [][]string) error {
-	err := i.createInviteesTable(inviteeNames)
+func (i GuestStore) SetupDatabase(guestNames [][]string) error {
+	err := i.createGuestsTable(guestNames)
 	if err != nil {
 		return err
 	}
@@ -40,8 +40,8 @@ func (i InviteeStore) SetupDatabase(inviteeNames [][]string) error {
 	return nil
 }
 
-func (i InviteeStore) createInviteesTable(inviteeNames [][]string) error {
-	createTableQuery := `CREATE TABLE IF NOT EXISTS invitees (
+func (i GuestStore) createGuestsTable(guestNames [][]string) error {
+	createTableQuery := `CREATE TABLE IF NOT EXISTS guests (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
 		code TEXT NOT NULL,
@@ -65,23 +65,23 @@ func (i InviteeStore) createInviteesTable(inviteeNames [][]string) error {
 	}
 
 	// This assumes that any new additions are appended to the end of the csv
-	if tableCount < len(inviteeNames) {
-		missingInviteesCount := len(inviteeNames) - tableCount
-		for idx := 0; idx < missingInviteesCount; idx++ {
-			err = i.insertInvitee(inviteeNames[tableCount+idx][0])
+	if tableCount < len(guestNames) {
+		missingGuestsCount := len(guestNames) - tableCount
+		for idx := 0; idx < missingGuestsCount; idx++ {
+			err = i.insertGuest(guestNames[tableCount+idx][0])
 			if err != nil {
 				return err
 			}
 		}
 	}
 
-	log.Println("invitees table set up and populated successfully!")
+	log.Println("guests table set up and populated successfully!")
 	return nil
 }
 
-func (i InviteeStore) getTableCount() (int, error) {
+func (i GuestStore) getTableCount() (int, error) {
 	var count int
-	query := "SELECT COUNT(*) FROM invitees"
+	query := "SELECT COUNT(*) FROM guests"
 	err := i.db.QueryRow(query).Scan(&count)
 	if err != nil {
 		return -1, err
@@ -89,10 +89,10 @@ func (i InviteeStore) getTableCount() (int, error) {
 	return count, nil
 }
 
-func (i InviteeStore) insertInvitee(name string) error {
+func (i GuestStore) insertGuest(name string) error {
 	tableCount, err := i.getTableCount()
 
-	inviteeKey := tableCount + 1
+	guestKey := tableCount + 1
 
 	firstName := name
 	if strings.Contains(name, " ") {
@@ -100,15 +100,15 @@ func (i InviteeStore) insertInvitee(name string) error {
 	}
 
 	randCharsLen := codeLen - len(firstName) - 1
-	code := firstName + "-" + generatePseudorandomString(inviteeKey, randCharsLen)
+	code := firstName + "-" + generatePseudorandomString(guestKey, randCharsLen)
 
-	insertQuery := `INSERT INTO invitees (name, code) VALUES (?, ?)`
+	insertQuery := `INSERT INTO guests (name, code) VALUES (?, ?)`
 	_, err = i.db.Exec(insertQuery, name, code)
 	return err
 }
 
-func (i InviteeStore) UpdateInviteeDetails(code, email, phoneNumber, dietaryRequirements string) error {
-	query := `UPDATE invitees
+func (i GuestStore) UpdateGuestDetails(code, email, phoneNumber, dietaryRequirements string) error {
+	query := `UPDATE guests
               SET
 				email = ?,
 				phone_number = ?, 
@@ -120,7 +120,7 @@ func (i InviteeStore) UpdateInviteeDetails(code, email, phoneNumber, dietaryRequ
 
 	result, err := i.db.Exec(query, email, phoneNumber, dietaryRequirements, code)
 	if err != nil {
-		return fmt.Errorf("failed to update invitee: %v", err)
+		return fmt.Errorf("failed to update guest: %v", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -135,14 +135,14 @@ func (i InviteeStore) UpdateInviteeDetails(code, email, phoneNumber, dietaryRequ
 	return nil
 }
 
-func (i InviteeStore) UpdateInviteeAttendance(code string, attendance, formCompleted bool) error {
-	query := `UPDATE invitees
+func (i GuestStore) UpdateGuestAttendance(code string, attendance, formCompleted bool) error {
+	query := `UPDATE guests
               SET attendance = ?, form_completed = ?
               WHERE code = ?`
 
 	result, err := i.db.Exec(query, attendance, formCompleted, code)
 	if err != nil {
-		return fmt.Errorf("failed to update invitee: %v", err)
+		return fmt.Errorf("failed to update guest: %v", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -157,14 +157,14 @@ func (i InviteeStore) UpdateInviteeAttendance(code string, attendance, formCompl
 	return nil
 }
 
-func (i InviteeStore) UpdateInviteeInvalidDetails(code string, invalidDetails bool) error {
-	query := `UPDATE invitees
+func (i GuestStore) UpdateGuestInvalidDetails(code string, invalidDetails bool) error {
+	query := `UPDATE guests
               SET invalid_details = ?
               WHERE code = ?`
 
 	result, err := i.db.Exec(query, invalidDetails, code)
 	if err != nil {
-		return fmt.Errorf("failed to update invitee: %v", err)
+		return fmt.Errorf("failed to update guest: %v", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -192,7 +192,7 @@ func generatePseudorandomString(seed int, length int) string {
 	return string(result)
 }
 
-func (i InviteeStore) GetInvitee(code string) (*models.Invitee, error) {
+func (i GuestStore) GetGuest(code string) (*models.Guest, error) {
 	// Prepare the query to select a guest by ID
 	query := `SELECT
 		id, 
@@ -205,13 +205,13 @@ func (i InviteeStore) GetInvitee(code string) (*models.Invitee, error) {
 		invalid_details,
 		details_provided,
 		form_completed 
-	FROM invitees WHERE code = ?`
+	FROM guests WHERE code = ?`
 
 	// Execute the query
 	row := i.db.QueryRow(query, code)
 
 	// Create a Guest variable to hold the result
-	var invitee models.Invitee
+	var guest models.Guest
 
 	var email sql.NullString
 	var phoneNumber sql.NullString
@@ -223,9 +223,9 @@ func (i InviteeStore) GetInvitee(code string) (*models.Invitee, error) {
 
 	// Scan the result into the guest struct
 	err := row.Scan(
-		&invitee.ID,
-		&invitee.Name,
-		&invitee.Code,
+		&guest.ID,
+		&guest.Name,
+		&guest.Code,
 		&email,
 		&phoneNumber,
 		&dietaryRequirements,
@@ -236,25 +236,25 @@ func (i InviteeStore) GetInvitee(code string) (*models.Invitee, error) {
 	)
 
 	if email.Valid {
-		invitee.Email = email.String
+		guest.Email = email.String
 	}
 	if phoneNumber.Valid {
-		invitee.PhoneNumber = phoneNumber.String
+		guest.PhoneNumber = phoneNumber.String
 	}
 	if dietaryRequirements.Valid {
-		invitee.DietaryRequirements = dietaryRequirements.String
+		guest.DietaryRequirements = dietaryRequirements.String
 	}
 	if attendance.Valid {
-		invitee.Attendance = attendance.Bool
+		guest.Attendance = attendance.Bool
 	}
 	if invalidDetails.Valid {
-		invitee.InvalidDetails = invalidDetails.Bool
+		guest.InvalidDetails = invalidDetails.Bool
 	}
 	if detailsProvided.Valid {
-		invitee.DetailsProvided = detailsProvided.Bool
+		guest.DetailsProvided = detailsProvided.Bool
 	}
 	if formCompleted.Valid {
-		invitee.FormCompleted = formCompleted.Bool
+		guest.FormCompleted = formCompleted.Bool
 	}
 
 	if err == sql.ErrNoRows {
@@ -263,5 +263,5 @@ func (i InviteeStore) GetInvitee(code string) (*models.Invitee, error) {
 		return nil, err // Return error for other scan errors
 	}
 
-	return &invitee, nil // Return the guest struct
+	return &guest, nil // Return the guest struct
 }

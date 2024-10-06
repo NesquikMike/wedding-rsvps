@@ -72,7 +72,7 @@ func main() {
 	}
 
 	// Open the SQLite database (creates the file if it doesn't exist)
-	db, err := sql.Open("sqlite3", "./invitees.db")
+	db, err := sql.Open("sqlite3", "./guests.db")
 	if err != nil {
 		log.Fatal("Error opening up database: ", err)
 	}
@@ -83,8 +83,8 @@ func main() {
 		log.Fatal("Error reading csv: ", err)
 	}
 
-	inviteeStore := database.NewInviteeStore(db)
-	err = inviteeStore.SetupDatabase(rows)
+	guestStore := database.NewGuestStore(db)
+	err = guestStore.SetupDatabase(rows)
 	if err != nil {
 		log.Fatal("Error setting up database: ", err)
 	}
@@ -108,15 +108,15 @@ func main() {
 		FooterMessage:         template.HTML(strings.ReplaceAll(envVars["FOOTER_MESSAGE"], "\\", "")),
 	}
 
-	c := controllers.NewController(isProd, tpl, inviteeStore, log.Default(), &viewData, secretCookieKey)
+	c := controllers.NewController(isProd, tpl, guestStore, log.Default(), &viewData, secretCookieKey)
 
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
 	http.HandleFunc("/", c.Index)
 	http.HandleFunc("/rsvp", c.RSVP)
-	http.HandleFunc("/invitee-details", c.InviteeDetails)
+	http.HandleFunc("/guest-details", c.GuestDetails)
 	http.HandleFunc("/change-details", c.ChangeDetails)
 	http.HandleFunc("/change-attendance-response", c.ChangeAttendanceResponse)
-	http.HandleFunc("/reset-invitee", c.ResetInvitee)
+	http.HandleFunc("/reset-guest", c.ResetGuest)
 	http.Handle("/favicon.ico", http.NotFoundHandler())
 	http.ListenAndServe(":8080", nil)
 }

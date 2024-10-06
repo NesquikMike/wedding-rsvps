@@ -16,59 +16,59 @@ import (
 type Controller struct {
 	isProd          bool
 	tpl             *template.Template
-	inviteeStore    database.InviteeStore
+	guestStore    database.GuestStore
 	logger          *log.Logger
 	viewData        *models.ViewData
 	secretCookieKey []byte
 }
 
-func NewController(isProd bool, t *template.Template, inviteeStore database.InviteeStore, logger *log.Logger, viewData *models.ViewData, secretCookieKey []byte) *Controller {
+func NewController(isProd bool, t *template.Template, guestStore database.GuestStore, logger *log.Logger, viewData *models.ViewData, secretCookieKey []byte) *Controller {
 	return &Controller{
 		isProd:          isProd,
 		tpl:             t,
-		inviteeStore:    inviteeStore,
+		guestStore:    guestStore,
 		logger:          logger,
 		viewData:        viewData,
 		secretCookieKey: secretCookieKey,
 	}
 }
 
-var InvalidInviteeError error = errors.New("inviteeCode is invalid")
+var InvalidGuestError error = errors.New("guestCode is invalid")
 
 func (c Controller) RSVP(w http.ResponseWriter, req *http.Request) {
-	var invitee *models.Invitee
-	invitee, err := c.getInvitee(w, req)
+	var guest *models.Guest
+	guest, err := c.getGuest(w, req)
 	if err != nil {
-		if err == http.ErrNoCookie || err == InvalidInviteeError {
-			inviteeCode := req.FormValue("invitee-code")
+		if err == http.ErrNoCookie || err == InvalidGuestError {
+			guestCode := req.FormValue("guest-code")
 			re := regexp.MustCompile(`^[A-Z][a-z]+-[A-Za-z0-9]+$`)
-			if len(inviteeCode) != 12 || !re.MatchString(inviteeCode) {
-				invalidInviteeCookie := cookies.GenerateCookie(cookies.SessionTokenName, models.InvalidInviteeKey, c.isProd)
-				if err := cookies.WriteEncrypted(w, invalidInviteeCookie, c.secretCookieKey); err != nil {
-					c.logger.Printf("could not write invalid invitee cookie: %v\n", err)
+			if len(guestCode) != 12 || !re.MatchString(guestCode) {
+				invalidGuestCookie := cookies.GenerateCookie(cookies.SessionTokenName, models.InvalidGuestKey, c.isProd)
+				if err := cookies.WriteEncrypted(w, invalidGuestCookie, c.secretCookieKey); err != nil {
+					c.logger.Printf("could not write invalid guest cookie: %v\n", err)
 				}
 				http.Redirect(w, req, "/", http.StatusFound)
 				return
 			}
 
-			i, err := c.inviteeStore.GetInvitee(inviteeCode)
-			if i == nil || inviteeCode == "" {
-				invalidInviteeCookie := cookies.GenerateCookie(cookies.SessionTokenName, models.InvalidInviteeKey, c.isProd)
-				if err := cookies.WriteEncrypted(w, invalidInviteeCookie, c.secretCookieKey); err != nil {
-					c.logger.Printf("could not write invalid invitee cookie: %v\n", err)
+			i, err := c.guestStore.GetGuest(guestCode)
+			if i == nil || guestCode == "" {
+				invalidGuestCookie := cookies.GenerateCookie(cookies.SessionTokenName, models.InvalidGuestKey, c.isProd)
+				if err := cookies.WriteEncrypted(w, invalidGuestCookie, c.secretCookieKey); err != nil {
+					c.logger.Printf("could not write invalid guest cookie: %v\n", err)
 				}
 				http.Redirect(w, req, "/", http.StatusFound)
 				return
 			}
 			if err != nil {
-				c.logger.Printf("could not get invitee: %v\n", err)
+				c.logger.Printf("could not get guest: %v\n", err)
 				w.WriteHeader(http.StatusBadRequest)
 				http.Redirect(w, req, "/error", http.StatusFound)
 				return
 			}
 
-			c.viewData.Invitee = i
-			invitee = i
+			c.viewData.Guest = i
+			guest = i
 		} else {
 			c.logger.Println(err)
 			http.Redirect(w, req, "/error", http.StatusFound)
@@ -76,52 +76,52 @@ func (c Controller) RSVP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	inviteeCookie := cookies.GenerateCookie(cookies.SessionTokenName, invitee.Code, c.isProd)
-	if err := cookies.WriteEncrypted(w, inviteeCookie, c.secretCookieKey); err != nil {
-		c.logger.Printf("for invitee %v could not write invitee cookie: %v\n", invitee.Code, err)
+	guestCookie := cookies.GenerateCookie(cookies.SessionTokenName, guest.Code, c.isProd)
+	if err := cookies.WriteEncrypted(w, guestCookie, c.secretCookieKey); err != nil {
+		c.logger.Printf("for guest %v could not write guest cookie: %v\n", guest.Code, err)
 	}
 
 	attendance := req.FormValue("attendance")
 	if attendance == "true" {
-		c.inviteeStore.UpdateInviteeAttendance(invitee.Code, true, invitee.FormCompleted)
+		c.guestStore.UpdateGuestAttendance(guest.Code, true, guest.FormCompleted)
 	} else {
-		c.inviteeStore.UpdateInviteeAttendance(invitee.Code, false, true)
+		c.guestStore.UpdateGuestAttendance(guest.Code, false, true)
 	}
 
 	http.Redirect(w, req, "/", http.StatusFound)
 }
 
-func (c Controller) getInvitee(w http.ResponseWriter, req *http.Request) (*models.Invitee, error) {
-	var invitee *models.Invitee
+func (c Controller) getGuest(w http.ResponseWriter, req *http.Request) (*models.Guest, error) {
+	var guest *models.Guest
 
-	inviteeCode, err := cookies.ReadEncrypted(req, cookies.SessionTokenName, c.secretCookieKey)
+	guestCode, err := cookies.ReadEncrypted(req, cookies.SessionTokenName, c.secretCookieKey)
 	if err != nil {
-		return &models.InvalidInvitee, err
+		return &models.InvalidGuest, err
 	}
 
 	// Stop an unneccessary read of the DB
-	if inviteeCode == models.InvalidInviteeKey {
-		return &models.InvalidInvitee, InvalidInviteeError
+	if guestCode == models.InvalidGuestKey {
+		return &models.InvalidGuest, InvalidGuestError
 	}
 
-	invitee, err = c.inviteeStore.GetInvitee(inviteeCode)
+	guest, err = c.guestStore.GetGuest(guestCode)
 	if err != nil {
 		return nil, err
-	} else if invitee == nil {
-		return &models.InvalidInvitee, fmt.Errorf("inviteeCode %s: %w", inviteeCode, InvalidInviteeError)
+	} else if guest == nil {
+		return &models.InvalidGuest, fmt.Errorf("guestCode %s: %w", guestCode, InvalidGuestError)
 	}
 
-	return invitee, nil
+	return guest, nil
 }
 
-func (c Controller) InviteeDetails(w http.ResponseWriter, req *http.Request) {
-	invitee, err := c.getInvitee(w, req)
-	if err != nil || invitee == nil {
-		if err == http.ErrNoCookie || errors.Unwrap(err) == InvalidInviteeError {
+func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
+	guest, err := c.getGuest(w, req)
+	if err != nil || guest == nil {
+		if err == http.ErrNoCookie || errors.Unwrap(err) == InvalidGuestError {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		c.logger.Printf("could not get invitee: %v\n", err)
+		c.logger.Printf("could not get guest: %v\n", err)
 		w.WriteHeader(http.StatusBadRequest)
 		http.Redirect(w, req, "/error", http.StatusFound)
 		return
@@ -129,8 +129,8 @@ func (c Controller) InviteeDetails(w http.ResponseWriter, req *http.Request) {
 
 	email := req.FormValue("email")
 	if !strings.Contains(email, "@") || !strings.Contains(email, ".") || len(email) < 6 {
-		c.logger.Println(fmt.Sprintf("email %s for inviteeCode %s is invalid", email, invitee.Code))
-		c.inviteeStore.UpdateInviteeInvalidDetails(invitee.Code, true)
+		c.logger.Println(fmt.Sprintf("email %s for guestCode %s is invalid", email, guest.Code))
+		c.guestStore.UpdateGuestInvalidDetails(guest.Code, true)
 		w.WriteHeader(http.StatusBadRequest)
 		http.Redirect(w, req, "/", http.StatusFound)
 		return
@@ -139,8 +139,8 @@ func (c Controller) InviteeDetails(w http.ResponseWriter, req *http.Request) {
 	phoneNumber := req.FormValue("phone-number")
 	re := regexp.MustCompile(`^[0-9+][0-9]+$`)
 	if !re.MatchString(phoneNumber) {
-		c.logger.Println(fmt.Sprintf("phoneNumber %s for inviteeCode %s is invalid", phoneNumber, invitee.Code))
-		c.inviteeStore.UpdateInviteeInvalidDetails(invitee.Code, true)
+		c.logger.Println(fmt.Sprintf("phoneNumber %s for guestCode %s is invalid", phoneNumber, guest.Code))
+		c.guestStore.UpdateGuestInvalidDetails(guest.Code, true)
 		w.WriteHeader(http.StatusBadRequest)
 		http.Redirect(w, req, "/", http.StatusFound)
 
@@ -148,106 +148,106 @@ func (c Controller) InviteeDetails(w http.ResponseWriter, req *http.Request) {
 	}
 	dietaryRequirements := req.FormValue("dietary-requirements")
 
-	c.inviteeStore.UpdateInviteeDetails(invitee.Code, email, phoneNumber, dietaryRequirements)
+	c.guestStore.UpdateGuestDetails(guest.Code, email, phoneNumber, dietaryRequirements)
 
 	http.Redirect(w, req, "/", http.StatusFound)
 }
 
 func (c Controller) ChangeDetails(w http.ResponseWriter, req *http.Request) {
-	invitee, err := c.getInvitee(w, req)
+	guest, err := c.getGuest(w, req)
 	if err != nil {
-		if err == http.ErrNoCookie || errors.Unwrap(err) == InvalidInviteeError {
+		if err == http.ErrNoCookie || errors.Unwrap(err) == InvalidGuestError {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		c.logger.Printf("could not get invitee: %v\n", err)
+		c.logger.Printf("could not get guest: %v\n", err)
 		w.WriteHeader(http.StatusBadRequest)
 		http.Redirect(w, req, "/error", http.StatusFound)
 		return
 	}
-	inviteeCookie := cookies.GenerateCookie(cookies.SessionTokenName, invitee.Code, c.isProd)
-	if err := cookies.WriteEncrypted(w, inviteeCookie, c.secretCookieKey); err != nil {
-		c.logger.Printf("for invitee %v could not write invitee cookie: %v\n", invitee.Code, err)
+	guestCookie := cookies.GenerateCookie(cookies.SessionTokenName, guest.Code, c.isProd)
+	if err := cookies.WriteEncrypted(w, guestCookie, c.secretCookieKey); err != nil {
+		c.logger.Printf("for guest %v could not write guest cookie: %v\n", guest.Code, err)
 	}
 
-	c.viewData.Invitee = invitee
-	c.inviteeStore.UpdatePageVisit(invitee.ID, "change-details")
+	c.viewData.Guest = guest
+	c.guestStore.UpdatePageVisit(guest.ID, "change-details")
 
-	c.tpl.ExecuteTemplate(w, "invitee_details.gohtml", c.viewData)
+	c.tpl.ExecuteTemplate(w, "guest_details.gohtml", c.viewData)
 }
 
 func (c Controller) ChangeAttendanceResponse(w http.ResponseWriter, req *http.Request) {
-	invitee, err := c.getInvitee(w, req)
+	guest, err := c.getGuest(w, req)
 	if err != nil {
-		if err == http.ErrNoCookie || errors.Unwrap(err) == InvalidInviteeError {
+		if err == http.ErrNoCookie || errors.Unwrap(err) == InvalidGuestError {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		c.logger.Printf("could not get invitee: %v\n", err)
+		c.logger.Printf("could not get guest: %v\n", err)
 		w.WriteHeader(http.StatusBadRequest)
 		http.Redirect(w, req, "/error", http.StatusFound)
 		return
 	}
-	inviteeCookie := cookies.GenerateCookie(cookies.SessionTokenName, invitee.Code, c.isProd)
-	if err := cookies.WriteEncrypted(w, inviteeCookie, c.secretCookieKey); err != nil {
-		c.logger.Printf("for invitee %v could not write invitee cookie: %v\n", invitee.Code, err)
+	guestCookie := cookies.GenerateCookie(cookies.SessionTokenName, guest.Code, c.isProd)
+	if err := cookies.WriteEncrypted(w, guestCookie, c.secretCookieKey); err != nil {
+		c.logger.Printf("for guest %v could not write guest cookie: %v\n", guest.Code, err)
 	}
-	c.viewData.Invitee = invitee
-	c.inviteeStore.UpdatePageVisit(invitee.ID, "change-attendance-response")
+	c.viewData.Guest = guest
+	c.guestStore.UpdatePageVisit(guest.ID, "change-attendance-response")
 
 	c.tpl.ExecuteTemplate(w, "change_attendance_response.gohtml", c.viewData)
 }
 
 func (c Controller) Index(w http.ResponseWriter, req *http.Request) {
-	invitee, err := c.getInvitee(w, req)
-	if invitee == nil || invitee.Code == models.InvalidInviteeKey {
-		c.viewData.Invitee = nil
+	guest, err := c.getGuest(w, req)
+	if guest == nil || guest.Code == models.InvalidGuestKey {
+		c.viewData.Guest = nil
 	}
 	if err != nil {
 		switch {
 		case err == http.ErrNoCookie:
 			c.tpl.ExecuteTemplate(w, "index.gohtml", c.viewData)
 			return
-		case err == InvalidInviteeError || errors.Unwrap(err) == InvalidInviteeError:
-			c.tpl.ExecuteTemplate(w, "invalid_invitee.gohtml", c.viewData)
+		case err == InvalidGuestError || errors.Unwrap(err) == InvalidGuestError:
+			c.tpl.ExecuteTemplate(w, "invalid_guest.gohtml", c.viewData)
 			return
 		default:
-			c.logger.Printf("could not get invitee: %v\n", err)
+			c.logger.Printf("could not get guest: %v\n", err)
 			w.WriteHeader(http.StatusBadRequest)
 			http.Redirect(w, req, "/error", http.StatusFound)
 			return
 		}
 	}
 
-	if invitee != nil {
-		inviteeCookie := cookies.GenerateCookie(cookies.SessionTokenName, invitee.Code, c.isProd)
-		if err := cookies.WriteEncrypted(w, inviteeCookie, c.secretCookieKey); err != nil {
-			c.logger.Printf("for invitee %v could not write invitee cookie: %v\n", invitee.Code, err)
+	if guest != nil {
+		guestCookie := cookies.GenerateCookie(cookies.SessionTokenName, guest.Code, c.isProd)
+		if err := cookies.WriteEncrypted(w, guestCookie, c.secretCookieKey); err != nil {
+			c.logger.Printf("for guest %v could not write guest cookie: %v\n", guest.Code, err)
 		}
-		c.viewData.Invitee = invitee
+		c.viewData.Guest = guest
 
 		switch {
-		case !invitee.Attendance:
-			c.inviteeStore.UpdatePageVisit(invitee.ID, "invitee-declined")
-			c.tpl.ExecuteTemplate(w, "invitee_declined.gohtml", c.viewData)
+		case !guest.Attendance:
+			c.guestStore.UpdatePageVisit(guest.ID, "guest-declined")
+			c.tpl.ExecuteTemplate(w, "guest_declined.gohtml", c.viewData)
 			return
-		case !invitee.DetailsProvided || invitee.InvalidDetails:
-			c.inviteeStore.UpdatePageVisit(invitee.ID, "invitee-details")
+		case !guest.DetailsProvided || guest.InvalidDetails:
+			c.guestStore.UpdatePageVisit(guest.ID, "guest-details")
 			c.tpl.ExecuteTemplate(w, "invalid_details.gohtml", c.viewData)
 			return
 		default:
-			c.inviteeStore.UpdatePageVisit(invitee.ID, "invitee-accepted")
-			c.tpl.ExecuteTemplate(w, "invitee_accepted.gohtml", c.viewData)
+			c.guestStore.UpdatePageVisit(guest.ID, "guest-accepted")
+			c.tpl.ExecuteTemplate(w, "guest_accepted.gohtml", c.viewData)
 			return
 		}
 	}
 
 }
 
-func (c Controller) ResetInvitee(w http.ResponseWriter, req *http.Request) {
+func (c Controller) ResetGuest(w http.ResponseWriter, req *http.Request) {
 	blankCookie := cookies.GenerateBlankCookie(cookies.SessionTokenName, c.isProd)
 	http.SetCookie(w, blankCookie)
-	c.viewData.Invitee = nil
+	c.viewData.Guest = nil
 
 	http.Redirect(w, req, "/", http.StatusFound)
 	c.tpl.ExecuteTemplate(w, "index.gohtml", c.viewData)

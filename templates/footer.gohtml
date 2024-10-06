@@ -1,7 +1,7 @@
 {{ define "footer" }}
-  {{ if and .Invitee .Invitee.FormCompleted }}
+  {{ if and .Guest .Guest.FormCompleted }}
     <h4>Wedding Gifts:</h4>
-	{{ if .Invitee.Attendance }}
+	{{ if .Guest.Attendance }}
     <p>Your presence is a gift in itself, but if you would like to give something, we'd love a cash gift.</p>
 	{{ else }}
     <p>Since you can't make it, if you would like to give something, we'd love a cash gift.</p>
@@ -13,7 +13,7 @@
       Sort Code: {{ .BankSortCode }}<br>
       Account Number: {{ .BankAccountNumber }}
 	</p>
-	{{ if .Invitee.Attendance }}
+	{{ if .Guest.Attendance }}
     <p>You can also gift cash in an envelope on the day if you prefer.</p>
 	{{ end }}
     <p>Many Thanks!</p>

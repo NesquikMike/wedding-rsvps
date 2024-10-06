@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-func (i InviteeStore) createPageVisitsTable() error {
+func (i GuestStore) createPageVisitsTable() error {
 	createTableQuery := `CREATE TABLE IF NOT EXISTS page_visits (
         id INTEGER NOT NULL,
         page_name TEXT NOT NULL,
@@ -24,7 +24,7 @@ func (i InviteeStore) createPageVisitsTable() error {
 	return nil
 }
 
-func (i InviteeStore) UpdatePageVisit(id int, page string) error {
+func (i GuestStore) UpdatePageVisit(id int, page string) error {
 	query := `INSERT INTO 
 	    page_visits (id, page_name, visit_count, first_visit_time, latest_visit_time)
 	VALUES (?, ?, 1, datetime('now'), datetime('now'))
