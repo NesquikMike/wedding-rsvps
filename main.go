@@ -90,6 +90,8 @@ func main() {
 
 	go startMidnightTicker(logFile)
 
+	apiKey := envVars["API_KEY"]
+
 	viewData := models.ViewData{
 		Url:                   envVars["URL"],
 		PartnerOne:            envVars["PARTNER_ONE"],
@@ -109,7 +111,7 @@ func main() {
 		FooterMessage:         template.HTML(strings.ReplaceAll(envVars["FOOTER_MESSAGE"], "\\", "")),
 	}
 
-	c := controllers.NewController(isProd, tpl, guestStore, log.Default(), &viewData, secretCookieKey)
+	c := controllers.NewController(isProd, tpl, guestStore, log.Default(), &viewData, secretCookieKey, apiKey)
 
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
 	http.HandleFunc("/", c.Index)
@@ -118,6 +120,10 @@ func main() {
 	http.HandleFunc("/change-details", c.ChangeDetails)
 	http.HandleFunc("/change-attendance-response", c.ChangeAttendanceResponse)
 	http.HandleFunc("/reset-guest", c.ResetGuest)
+	http.HandleFunc("/api/add-guest", c.ApiKeyMiddleware(c.AddGuest))
+	http.HandleFunc("/api/get-guest", c.ApiKeyMiddleware(c.GetGuest))
+	http.HandleFunc("/api/get-rsvps", c.ApiKeyMiddleware(c.GetRSVPs))
+	http.HandleFunc("/api/get-visits-data", c.ApiKeyMiddleware(c.GetVisitsData))
 	http.Handle("/favicon.ico", http.NotFoundHandler())
 	http.ListenAndServe(":8080", nil)
 }

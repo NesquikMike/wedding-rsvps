@@ -69,7 +69,7 @@ func (i GuestStore) createGuestsTable(guestNames [][]string) error {
 	if tableCount < len(guestNames) {
 		missingGuestsCount := len(guestNames) - tableCount
 		for idx := 0; idx < missingGuestsCount; idx++ {
-			err = i.insertGuest(guestNames[tableCount+idx][0])
+			err = i.InsertGuest(guestNames[tableCount+idx][0])
 			if err != nil {
 				return err
 			}
@@ -90,7 +90,7 @@ func (i GuestStore) getTableCount() (int, error) {
 	return count, nil
 }
 
-func (i GuestStore) insertGuest(name string) error {
+func (i GuestStore) InsertGuest(name string) error {
 	tableCount, err := i.getTableCount()
 
 	guestKey := tableCount + 1
@@ -194,7 +194,6 @@ func generatePseudorandomString(seed int, length int) string {
 }
 
 func (i GuestStore) GetGuest(code string) (*models.Guest, error) {
-	// Prepare the query to select a guest by ID
 	query := `SELECT
 		id, 
 		name, 
@@ -209,10 +208,8 @@ func (i GuestStore) GetGuest(code string) (*models.Guest, error) {
 		form_completed 
 	FROM guests WHERE code = ?`
 
-	// Execute the query
 	row := i.db.QueryRow(query, code)
 
-	// Create a Guest variable to hold the result
 	var guest models.Guest
 
 	var email sql.NullString
@@ -267,4 +264,53 @@ func (i GuestStore) GetGuest(code string) (*models.Guest, error) {
 	}
 
 	return &guest, nil // Return the guest struct
+}
+
+func (i GuestStore) GetGuestCode(name string) (string, error) {
+	query := `SELECT
+		code 
+	FROM guests WHERE name = ?`
+
+	// Execute the query
+	row := i.db.QueryRow(query, name)
+
+	var code sql.NullString
+
+	err := row.Scan(
+		&code,
+	)
+	if err == sql.ErrNoRows {
+		return "", fmt.Errorf("no guest found with the given name %v", name)
+	} else if err != nil {
+		return "", err // Return error for other scan errors
+	}
+
+	if !code.Valid {
+		return "", fmt.Errorf("code is invalid for name %v", name)
+	}
+
+	return code.String, nil
+}
+
+func (i GuestStore) GetRSVPs() (*sql.Rows, error) {
+	query := `SELECT
+		id, 
+		name, 
+		code, 
+		email, 
+		phone_number, 
+		dietary_requirements,
+		attendance,
+		invalid_details,
+		details_provided,
+		form_started,
+		form_completed 
+	FROM guests`
+
+	rows, err := i.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	return rows, nil
 }

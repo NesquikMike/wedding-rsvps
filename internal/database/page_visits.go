@@ -1,6 +1,7 @@
 package database
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 )
@@ -49,4 +50,21 @@ func (i GuestStore) UpdatePageVisit(id int, page string) error {
 	}
 
 	return nil
+}
+
+func (i GuestStore) GetVisitsData() (*sql.Rows, error) {
+	query := `SELECT
+        id,
+        page_name,
+		visit_count,
+		first_visit_time,
+		latest_visit_time
+	FROM page_visits`
+
+	rows, err := i.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	return rows, nil
 }

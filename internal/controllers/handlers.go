@@ -21,9 +21,10 @@ type Controller struct {
 	logger          *log.Logger
 	viewData        *models.ViewData
 	secretCookieKey []byte
+	apiKey          string
 }
 
-func NewController(isProd bool, t *template.Template, guestStore database.GuestStore, logger *log.Logger, viewData *models.ViewData, secretCookieKey []byte) *Controller {
+func NewController(isProd bool, t *template.Template, guestStore database.GuestStore, logger *log.Logger, viewData *models.ViewData, secretCookieKey []byte, apiKey string) *Controller {
 	return &Controller{
 		isProd:          isProd,
 		tpl:             t,
@@ -31,6 +32,7 @@ func NewController(isProd bool, t *template.Template, guestStore database.GuestS
 		logger:          logger,
 		viewData:        viewData,
 		secretCookieKey: secretCookieKey,
+		apiKey:          apiKey,
 	}
 }
 
@@ -38,7 +40,7 @@ var InvalidGuestError error = errors.New("guestCode is invalid")
 
 func (c Controller) RSVP(w http.ResponseWriter, req *http.Request) {
 	var guest *models.Guest
-	guest, err := c.getGuest(w, req)
+	guest, err := c.getGuestFromCookie(w, req)
 	if err != nil {
 		if err == http.ErrNoCookie || err == InvalidGuestError {
 			guestCode := req.FormValue("guest-code")
@@ -94,7 +96,7 @@ func (c Controller) RSVP(w http.ResponseWriter, req *http.Request) {
 	http.Redirect(w, req, "/", http.StatusFound)
 }
 
-func (c Controller) getGuest(w http.ResponseWriter, req *http.Request) (*models.Guest, error) {
+func (c Controller) getGuestFromCookie(w http.ResponseWriter, req *http.Request) (*models.Guest, error) {
 	var guest *models.Guest
 
 	guestCode, err := cookies.ReadEncrypted(req, cookies.SessionTokenName, c.secretCookieKey)
@@ -118,7 +120,7 @@ func (c Controller) getGuest(w http.ResponseWriter, req *http.Request) (*models.
 }
 
 func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
-	guest, err := c.getGuest(w, req)
+	guest, err := c.getGuestFromCookie(w, req)
 	if err != nil || guest == nil {
 		if err == http.ErrNoCookie || errors.Unwrap(err) == InvalidGuestError {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -157,7 +159,7 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 }
 
 func (c Controller) ChangeDetails(w http.ResponseWriter, req *http.Request) {
-	guest, err := c.getGuest(w, req)
+	guest, err := c.getGuestFromCookie(w, req)
 	if err != nil {
 		if err == http.ErrNoCookie || errors.Unwrap(err) == InvalidGuestError {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -180,7 +182,7 @@ func (c Controller) ChangeDetails(w http.ResponseWriter, req *http.Request) {
 }
 
 func (c Controller) ChangeAttendanceResponse(w http.ResponseWriter, req *http.Request) {
-	guest, err := c.getGuest(w, req)
+	guest, err := c.getGuestFromCookie(w, req)
 	if err != nil {
 		if err == http.ErrNoCookie || errors.Unwrap(err) == InvalidGuestError {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -202,16 +204,18 @@ func (c Controller) ChangeAttendanceResponse(w http.ResponseWriter, req *http.Re
 }
 
 func (c Controller) Index(w http.ResponseWriter, req *http.Request) {
-	guest, err := c.getGuest(w, req)
+	guest, err := c.getGuestFromCookie(w, req)
 	if guest == nil || guest.Code == models.InvalidGuestKey {
 		c.viewData.Guest = nil
 	}
 	if err != nil {
 		switch {
 		case err == http.ErrNoCookie:
+			c.logger.Printf("new visitor")
 			c.tpl.ExecuteTemplate(w, "index.gohtml", c.viewData)
 			return
 		case err == InvalidGuestError || errors.Unwrap(err) == InvalidGuestError:
+			c.logger.Printf("invalid guest code")
 			c.tpl.ExecuteTemplate(w, "invalid_guest.gohtml", c.viewData)
 			return
 		default:
