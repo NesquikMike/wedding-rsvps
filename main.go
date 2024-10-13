@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nesquikmike/wedding-rsvps/internal/backup"
 	"github.com/nesquikmike/wedding-rsvps/internal/controllers"
 	"github.com/nesquikmike/wedding-rsvps/internal/database"
 	"github.com/nesquikmike/wedding-rsvps/internal/models"
@@ -26,6 +27,7 @@ var tpl *template.Template
 const (
 	requiredLenSecretCookieKey = 32
 	csvPath                    = "./names.csv"
+	guestsDBFilePath           = "./guests.db"
 )
 
 func init() {
@@ -71,7 +73,7 @@ func main() {
 	}
 
 	// Open the SQLite database (creates the file if it doesn't exist)
-	db, err := sql.Open("sqlite3", "./guests.db")
+	db, err := sql.Open("sqlite3", guestsDBFilePath)
 	if err != nil {
 		log.Fatal("Error opening up database: ", err)
 	}
@@ -88,7 +90,16 @@ func main() {
 		log.Fatal("Error setting up database: ", err)
 	}
 
-	go startMidnightTicker(logFile)
+	s3Bucket := envVars["S3_BUCKET"]
+	var s3Uploader *backup.S3Uploader
+	if s3Bucket != "" {
+		s3Uploader, err = backup.NewS3Uploader(s3Bucket)
+		if err != nil {
+			log.Fatal("Error setting up S3Uploader: ", err)
+		}
+	}
+
+	go startMidnightTicker(isProd, s3Uploader, logFile)
 
 	apiKey := envVars["API_KEY"]
 
@@ -167,7 +178,7 @@ func setNewLogFile(oldFile *os.File) (*os.File, error) {
 	return logFile, nil
 }
 
-func startMidnightTicker(oldLogFile *os.File) {
+func startMidnightTicker(isProd bool, s3Uploader *backup.S3Uploader, oldLogFile *os.File) {
 	serverStart := time.Now()
 	firstMidnight := serverStart.Truncate(24 * time.Hour).Add(24 * time.Hour)
 	durationUntilFirstMidnight := firstMidnight.Sub(serverStart)
@@ -182,9 +193,55 @@ func startMidnightTicker(oldLogFile *os.File) {
 		log.Fatalf("error opening log file: %v", err)
 	}
 
+	if isProd && s3Uploader != nil {
+		err = performBackups(s3Uploader)
+		if err != nil {
+			log.Printf("error performing backups: %v", err)
+		}
+	}
+
 	for range ticker.C {
 		logFile, err = setNewLogFile(logFile)
+		if err != nil {
+			log.Printf("error opening log file: %v", err)
+		}
+
+		if isProd && s3Uploader != nil {
+			err = performBackups(s3Uploader)
+			if err != nil {
+				log.Printf("error performing backups: %v", err)
+			}
+		}
 	}
 
 	defer logFile.Close()
+}
+
+func performBackups(s3Uploader *backup.S3Uploader) error {
+	ydayDate := time.Now().Add(-24 * time.Hour).Format("2006-01-02")
+	oldLogFileName := fmt.Sprintf("logs/server_%s.log", ydayDate)
+	err := s3Uploader.UploadFile(oldLogFileName, oldLogFileName)
+	if err != nil {
+		log.Printf("error uploading log file %s to s3: %v", oldLogFileName, err)
+	}
+
+	dbBackupFileName := fmt.Sprintf("guests_%s.db", ydayDate)
+	dbBackupFilePath := fmt.Sprintf("tmp/%s", dbBackupFileName)
+	err = backup.BackupDatabaseLocally(guestsDBFilePath, dbBackupFilePath)
+	if err != nil {
+		log.Printf("error creating db backup file %s: %v", dbBackupFileName, err)
+	}
+
+	dbBackupS3FilePath := fmt.Sprintf("backup_dbs/%s", dbBackupFileName)
+	err = s3Uploader.UploadFile(dbBackupFilePath, dbBackupS3FilePath)
+	if err != nil {
+		log.Printf("error uploading db backup file %s to s3: %v", dbBackupS3FilePath, err)
+	}
+
+	err = os.Remove(dbBackupFilePath)
+	if err != nil {
+		log.Printf("error removing db backup file %s locally: %v", dbBackupFilePath, err)
+	}
+
+	return nil
 }

@@ -157,7 +157,6 @@ func (c Controller) GetRSVPs(w http.ResponseWriter, r *http.Request) {
 		var emailStr, phoneNumberStr, dietaryRequirementsStr string
 		var attendanceBool, invalidDetailsBool, detailsProvidedBool, formStartedBool, formCompletedBool bool
 
-
 		if email.Valid {
 			emailStr = email.String
 		}
