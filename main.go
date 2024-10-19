@@ -93,7 +93,7 @@ func main() {
 	s3Bucket := envVars["S3_BUCKET"]
 	var s3Uploader *backup.S3Uploader
 	if s3Bucket != "" {
-		s3Uploader, err = backup.NewS3Uploader(s3Bucket)
+		s3Uploader, err = backup.NewS3Uploader(s3Bucket, isProd)
 		if err != nil {
 			log.Fatal("Error setting up S3Uploader: ", err)
 		}

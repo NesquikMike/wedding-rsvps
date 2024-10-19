@@ -16,13 +16,20 @@ type S3Uploader struct {
 	Bucket   string
 }
 
-func NewS3Uploader(bucket string) (*S3Uploader, error) {
+func NewS3Uploader(bucket string, isProd bool) (*S3Uploader, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, fmt.Errorf("unable to load SDK config, %v", err)
 	}
 
-	s3Client := s3.NewFromConfig(cfg)
+	var s3Client *s3.Client
+	if isProd {
+		s3Client = s3.NewFromConfig(cfg)
+	} else {
+		s3Client = s3.NewFromConfig(cfg, func (o *s3.Options) {
+			o.BaseEndpoint = aws.String("https://localhost:4566/")
+		})
+	}
 
 	return &S3Uploader{
 		S3Client: s3Client,
