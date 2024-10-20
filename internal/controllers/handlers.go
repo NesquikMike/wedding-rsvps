@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/nesquikmike/wedding-rsvps/internal/cookies"
 	"github.com/nesquikmike/wedding-rsvps/internal/database"
@@ -22,9 +23,10 @@ type Controller struct {
 	viewData        *models.ViewData
 	secretCookieKey []byte
 	apiKey          string
+	s3AssetsBucket          string
 }
 
-func NewController(isProd bool, t *template.Template, guestStore database.GuestStore, logger *log.Logger, viewData *models.ViewData, secretCookieKey []byte, apiKey string) *Controller {
+func NewController(isProd bool, t *template.Template, guestStore database.GuestStore, logger *log.Logger, viewData *models.ViewData, secretCookieKey []byte, apiKey, s3AssetsBucket string) *Controller {
 	return &Controller{
 		isProd:          isProd,
 		tpl:             t,
@@ -33,6 +35,7 @@ func NewController(isProd bool, t *template.Template, guestStore database.GuestS
 		viewData:        viewData,
 		secretCookieKey: secretCookieKey,
 		apiKey:          apiKey,
+		s3AssetsBucket: s3AssetsBucket,
 	}
 }
 
@@ -269,4 +272,19 @@ func (c Controller) ResetGuest(w http.ResponseWriter, req *http.Request) {
 	c.viewData.Guest = nil
 
 	http.Redirect(w, req, "/", http.StatusFound)
+}
+
+func (c Controller) StaticHandler(w http.ResponseWriter, req *http.Request) {
+	objectKey := strings.TrimPrefix(req.URL.Path, "/assets")
+	var s3URL string
+	if c.isProd {
+		s3URL = "https://" + c.s3AssetsBucket + ".s3.amazonaws.com/" + objectKey
+	} else {
+		s3URL = "http://localhost:4566/" + c.s3AssetsBucket + objectKey
+	}
+
+    w.Header().Set("Cache-Control", "public, max-age=86400") // Cache for 1 day
+    w.Header().Set("Expires", time.Now().Add(24*time.Hour).Format(http.TimeFormat))
+
+    http.Redirect(w, req, s3URL, http.StatusFound)
 }

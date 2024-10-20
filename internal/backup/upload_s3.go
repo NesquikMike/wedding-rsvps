@@ -8,7 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"os"
-	"time"
 )
 
 type S3Uploader struct {
@@ -17,19 +16,32 @@ type S3Uploader struct {
 }
 
 func NewS3Uploader(bucket string, isProd bool) (*S3Uploader, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
-	if err != nil {
-		return nil, fmt.Errorf("unable to load SDK config, %v", err)
+	var cfg aws.Config
+	if isProd {
+		c, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("eu-west-2"))
+		if err != nil {
+			return nil, fmt.Errorf("unable to load SDK config, %v", err)
+		}
+		cfg = c
+	} else {
+		c, err := config.LoadDefaultConfig(context.TODO(), config.WithEndpointResolver(aws.EndpointResolverFunc(
+			func(service, region string) (aws.Endpoint, error) {
+				return aws.Endpoint{
+					URL:           "http://localhost:4566", // LocalStack endpoint
+					SigningRegion: "eu-west-2",              // Set your desired region
+				}, nil
+			},
+		)))
+		if err != nil {
+			return nil, fmt.Errorf("unable to load SDK config, %v", err)
+		}
+		cfg = c
 	}
 
-	var s3Client *s3.Client
-	if isProd {
-		s3Client = s3.NewFromConfig(cfg)
-	} else {
-		s3Client = s3.NewFromConfig(cfg, func (o *s3.Options) {
-			o.BaseEndpoint = aws.String("https://localhost:4566/")
-		})
-	}
+	// this is needed to write backup files in localstack
+	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.UsePathStyle = true
+	})
 
 	return &S3Uploader{
 		S3Client: s3Client,
@@ -46,7 +58,7 @@ func (uploader *S3Uploader) UploadFile(filePath string, s3FilePath string) error
 
 	_, err = uploader.S3Client.PutObject(context.TODO(), &s3.PutObjectInput{
 		Bucket: aws.String(uploader.Bucket),
-		Key:    aws.String(time.Now().Format(s3FilePath)),
+		Key:    aws.String(s3FilePath),
 		Body:   file,
 		ACL:    types.ObjectCannedACLPrivate,
 	})
