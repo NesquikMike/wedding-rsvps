@@ -19,11 +19,23 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
     
+      - name: SSH into EC2 and check if folder exists, pull from GitHub if not
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} << 'EOF'
+            if [ ! -d "wedding-rsvps" ]; then
+              echo "Folder does not exist. Cloning repository..."
+              git clone https://github.com/NesquikMike/wedding-rsvps.git
+            else
+              echo "Folder already exists. Skipping clone."
+            fi
+      EOF
+        shell: bash
+
       - name: Create .env file on EC2
         run: |
           echo "Creating .env file on EC2 instance"
-          ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} << 'EOF'
-            cat <<EOT > /wedding-rsvps/.env
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} << 'EOF'
+            cat <<EOT > ~/wedding-rsvps/.env
             API_KEY=${{ secrets.API_KEY }}
             BANK_ACCOUNT_NAME=${{ secrets.BANK_ACCOUNT_NAME }}
             BANK_ACCOUNT_NUMBER=${{ secrets.BANK_ACCOUNT_NUMBER }}
@@ -50,4 +62,4 @@ jobs:
 
       - name: SSH into EC2 and Deploy
         run: |
-          ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} 'cd /wedding-rsvps && git pull origin master && ./deploy.sh ${{ secrets.S3_BUCKET_BACKUPS }}'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} 'cd /wedding-rsvps && git pull origin master && ./deploy.sh ${{ secrets.S3_BUCKET_BACKUPS }}'
