@@ -28,7 +28,7 @@ jobs:
             else
               echo "Folder already exists. Skipping clone."
             fi
-      EOF
+          EOF
         shell: bash
 
       - name: Create .env file on EC2
