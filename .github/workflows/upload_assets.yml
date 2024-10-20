@@ -22,4 +22,4 @@ jobs:
 
       - name: Sync assets to S3
         run: |
-          aws s3 sync ./assets s3://your-bucket-name/ --delete
+          aws s3 sync ./assets s3://${{ secrets.S3_BUCKET_ASSETS }}/ --delete
