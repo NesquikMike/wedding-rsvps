@@ -1,0 +1,53 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+	
+      - name: Create .env file on EC2
+        run: |
+          echo "Creating .env file on EC2 instance"
+          ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} << 'EOF'
+            cat <<EOT > /wedding-rsvps/.env
+            API_KEY=${{ secrets.API_KEY }}
+            BANK_ACCOUNT_NAME=${{ secrets.BANK_ACCOUNT_NAME }}
+            BANK_ACCOUNT_NUMBER=${{ secrets.BANK_ACCOUNT_NUMBER }}
+            BANK_NAME=${{ secrets.BANK_NAME }}
+            BANK_SORT_CODE=${{ secrets.BANK_SORT_CODE }}
+            DATE=${{ secrets.DATE }}
+            ENVIRONMENT=${{ secrets.ENVIRONMENT }}
+            FOOTER_MESSAGE=${{ secrets.FOOTER_MESSAGE }}
+            MAIN_PHOTO_AND_FILE_NAME=${{ secrets.MAIN_PHOTO_AND_FILE_NAME }}
+            PARTNER_ONE=${{ secrets.PARTNER_ONE }}
+            PARTNER_TWO=${{ secrets.PARTNER_TWO }}
+            POST_CEREMONY_ITINERARY=${{ secrets.POST_CEREMONY_ITINERARY }}
+            S3_BUCKET_ASSETS=${{ secrets.S3_BUCKET_ASSETS }}
+            S3_BUCKET_BACKUPS=${{ secrets.S3_BUCKET_BACKUPS }}
+            SECRET_COOKIE_KEY=${{ secrets.SECRET_COOKIE_KEY }}
+            TIME_ARRIVAL=${{ secrets.TIME_ARRIVAL }}
+            TIME_START=${{ secrets.TIME_START }}
+            URL=${{ secrets.URL }}
+            VENUE_ADDRESS=${{ secrets.VENUE_ADDRESS }}
+            VENUE_TRAVEL_DETAILS=${{ secrets.VENUE_TRAVEL_DETAILS }}
+            VENUE_VAGUE=${{ secrets.VENUE_VAGUE }}
+            EOT
+          EOF
+
+      - name: SSH into EC2 and Deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} 'cd /wedding-rsvps && git pull origin master && ./deploy.sh ${{ secrets.S3_BUCKET_BACKUPS }}'

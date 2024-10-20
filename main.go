@@ -28,6 +28,7 @@ const (
 	requiredLenSecretCookieKey = 32
 	csvPath                    = "./names.csv"
 	guestsDBFilePath           = "./guests.db"
+	backupTimeInterval         = 24 * time.Hour
 )
 
 func init() {
@@ -90,16 +91,16 @@ func main() {
 		log.Fatal("Error setting up database: ", err)
 	}
 
-	s3Bucket := envVars["S3_BUCKET"]
+	s3BucketBackups := envVars["S3_BUCKET_BACKUPS"]
 	var s3Uploader *backup.S3Uploader
-	if s3Bucket != "" {
-		s3Uploader, err = backup.NewS3Uploader(s3Bucket)
+	if s3BucketBackups != "" {
+		s3Uploader, err = backup.NewS3Uploader(s3BucketBackups, isProd)
 		if err != nil {
 			log.Fatal("Error setting up S3Uploader: ", err)
 		}
 	}
 
-	go startMidnightTicker(isProd, s3Uploader, logFile)
+	go startMidnightTicker(s3Uploader, logFile)
 
 	apiKey := envVars["API_KEY"]
 
@@ -122,9 +123,14 @@ func main() {
 		FooterMessage:         template.HTML(strings.ReplaceAll(envVars["FOOTER_MESSAGE"], "\\", "")),
 	}
 
-	c := controllers.NewController(isProd, tpl, guestStore, log.Default(), &viewData, secretCookieKey, apiKey)
+	s3BucketAssets := envVars["S3_BUCKET_ASSETS"]
 
-	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
+	c := controllers.NewController(isProd, tpl, guestStore, log.Default(), &viewData, secretCookieKey, apiKey, s3BucketAssets)
+	if s3BucketAssets != "" {
+		http.HandleFunc("/assets/", c.StaticHandler)
+	} else {
+		http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
+	}
 	http.HandleFunc("/", c.Index)
 	http.HandleFunc("/rsvp", c.RSVP)
 	http.HandleFunc("/guest-details", c.GuestDetails)
@@ -178,14 +184,14 @@ func setNewLogFile(oldFile *os.File) (*os.File, error) {
 	return logFile, nil
 }
 
-func startMidnightTicker(isProd bool, s3Uploader *backup.S3Uploader, oldLogFile *os.File) {
+func startMidnightTicker(s3Uploader *backup.S3Uploader, oldLogFile *os.File) {
 	serverStart := time.Now()
-	firstMidnight := serverStart.Truncate(24 * time.Hour).Add(24 * time.Hour)
+	firstMidnight := serverStart.Truncate(backupTimeInterval).Add(backupTimeInterval)
 	durationUntilFirstMidnight := firstMidnight.Sub(serverStart)
 
 	time.Sleep(durationUntilFirstMidnight)
 
-	ticker := time.NewTicker(24 * time.Hour)
+	ticker := time.NewTicker(backupTimeInterval)
 	defer ticker.Stop()
 
 	logFile, err := setNewLogFile(oldLogFile)
@@ -193,7 +199,7 @@ func startMidnightTicker(isProd bool, s3Uploader *backup.S3Uploader, oldLogFile 
 		log.Fatalf("error opening log file: %v", err)
 	}
 
-	if isProd && s3Uploader != nil {
+	if s3Uploader != nil {
 		err = performBackups(s3Uploader)
 		if err != nil {
 			log.Printf("error performing backups: %v", err)
@@ -206,7 +212,7 @@ func startMidnightTicker(isProd bool, s3Uploader *backup.S3Uploader, oldLogFile 
 			log.Printf("error opening log file: %v", err)
 		}
 
-		if isProd && s3Uploader != nil {
+		if s3Uploader != nil {
 			err = performBackups(s3Uploader)
 			if err != nil {
 				log.Printf("error performing backups: %v", err)
@@ -218,7 +224,7 @@ func startMidnightTicker(isProd bool, s3Uploader *backup.S3Uploader, oldLogFile 
 }
 
 func performBackups(s3Uploader *backup.S3Uploader) error {
-	ydayDate := time.Now().Add(-24 * time.Hour).Format("2006-01-02")
+	ydayDate := time.Now().Add(backupTimeInterval).Format("2006-01-02")
 	oldLogFileName := fmt.Sprintf("logs/server_%s.log", ydayDate)
 	err := s3Uploader.UploadFile(oldLogFileName, oldLogFileName)
 	if err != nil {
@@ -226,10 +232,16 @@ func performBackups(s3Uploader *backup.S3Uploader) error {
 	}
 
 	dbBackupFileName := fmt.Sprintf("guests_%s.db", ydayDate)
-	dbBackupFilePath := fmt.Sprintf("tmp/%s", dbBackupFileName)
+	dbBackupFilePath := fmt.Sprintf("/tmp/%s", dbBackupFileName)
 	err = backup.BackupDatabaseLocally(guestsDBFilePath, dbBackupFilePath)
 	if err != nil {
 		log.Printf("error creating db backup file %s: %v", dbBackupFileName, err)
+	}
+
+	// backup the current db as well in case of a server restart and db gets deleted
+	err = s3Uploader.UploadFile(dbBackupFilePath, strings.TrimPrefix(guestsDBFilePath, "./"))
+	if err != nil {
+		log.Printf("error uploading db backup file %s to s3: %v", guestsDBFilePath, err)
 	}
 
 	dbBackupS3FilePath := fmt.Sprintf("backup_dbs/%s", dbBackupFileName)

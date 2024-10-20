@@ -2,3 +2,5 @@
 *.db
 names.csv
 server*.log
+.ssh
+assets/img

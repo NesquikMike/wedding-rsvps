@@ -1,9 +1,10 @@
 package backup
 
 import (
-	"golang.org/x/sys/unix"
 	"io"
 	"os"
+
+	"golang.org/x/sys/unix"
 )
 
 func BackupDatabaseLocally(dbPath, backupPath string) error {
