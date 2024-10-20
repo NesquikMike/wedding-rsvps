@@ -238,6 +238,12 @@ func performBackups(s3Uploader *backup.S3Uploader) error {
 		log.Printf("error creating db backup file %s: %v", dbBackupFileName, err)
 	}
 
+	// backup the current db as well in case of a server restart and db gets deleted
+	err = s3Uploader.UploadFile(dbBackupFilePath, strings.TrimPrefix(guestsDBFilePath, "./"))
+	if err != nil {
+		log.Printf("error uploading db backup file %s to s3: %v", guestsDBFilePath, err)
+	}
+
 	dbBackupS3FilePath := fmt.Sprintf("backup_dbs/%s", dbBackupFileName)
 	err = s3Uploader.UploadFile(dbBackupFilePath, dbBackupS3FilePath)
 	if err != nil {
