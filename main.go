@@ -28,7 +28,7 @@ const (
 	requiredLenSecretCookieKey = 32
 	csvPath                    = "./names.csv"
 	guestsDBFilePath           = "./guests.db"
-	backupTimeInterval = 24 * time.Hour
+	backupTimeInterval         = 24 * time.Hour
 )
 
 func init() {

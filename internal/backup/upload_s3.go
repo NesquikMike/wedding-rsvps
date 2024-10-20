@@ -3,11 +3,12 @@ package backup
 import (
 	"context"
 	"fmt"
+	"os"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"os"
 )
 
 type S3Uploader struct {
@@ -28,7 +29,7 @@ func NewS3Uploader(bucket string, isProd bool) (*S3Uploader, error) {
 			func(service, region string) (aws.Endpoint, error) {
 				return aws.Endpoint{
 					URL:           "http://localhost:4566", // LocalStack endpoint
-					SigningRegion: "eu-west-2",              // Set your desired region
+					SigningRegion: "eu-west-2",             // Set your desired region
 				}, nil
 			},
 		)))

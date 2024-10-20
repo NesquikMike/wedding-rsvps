@@ -23,7 +23,7 @@ type Controller struct {
 	viewData        *models.ViewData
 	secretCookieKey []byte
 	apiKey          string
-	s3AssetsBucket          string
+	s3AssetsBucket  string
 }
 
 func NewController(isProd bool, t *template.Template, guestStore database.GuestStore, logger *log.Logger, viewData *models.ViewData, secretCookieKey []byte, apiKey, s3AssetsBucket string) *Controller {
@@ -35,7 +35,7 @@ func NewController(isProd bool, t *template.Template, guestStore database.GuestS
 		viewData:        viewData,
 		secretCookieKey: secretCookieKey,
 		apiKey:          apiKey,
-		s3AssetsBucket: s3AssetsBucket,
+		s3AssetsBucket:  s3AssetsBucket,
 	}
 }
 
@@ -283,8 +283,8 @@ func (c Controller) StaticHandler(w http.ResponseWriter, req *http.Request) {
 		s3URL = "http://localhost:4566/" + c.s3AssetsBucket + objectKey
 	}
 
-    w.Header().Set("Cache-Control", "public, max-age=86400") // Cache for 1 day
-    w.Header().Set("Expires", time.Now().Add(24*time.Hour).Format(http.TimeFormat))
+	w.Header().Set("Cache-Control", "public, max-age=86400") // Cache for 1 day
+	w.Header().Set("Expires", time.Now().Add(24*time.Hour).Format(http.TimeFormat))
 
-    http.Redirect(w, req, s3URL, http.StatusFound)
+	http.Redirect(w, req, s3URL, http.StatusFound)
 }
