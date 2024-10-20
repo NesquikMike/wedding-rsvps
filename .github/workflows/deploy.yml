@@ -50,4 +50,4 @@ jobs:
 
       - name: SSH into EC2 and Deploy
         run: |
-          ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} 'cd /wedding-rsvps && git pull origin master && ./deploy.sh'
+          ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} 'cd /wedding-rsvps && git pull origin master && ./deploy.sh ${{ secrets.S3_BUCKET_BACKUPS }}'
