@@ -32,7 +32,7 @@ else
 fi
 
 echo "Building the Go application..."
-go build -o "$GO_APP"
+CGO_ENABLED=1 go build -o "$GO_APP"
 
 echo "Running the Go application..."
 ./"$GO_APP" & # The & runs it in the background; remove it if you want it to run in the foreground
