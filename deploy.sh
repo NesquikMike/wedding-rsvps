@@ -37,4 +37,16 @@ go build -o "$GO_APP"
 echo "Running the Go application..."
 "$GO_APP" & # The & runs it in the background; remove it if you want it to run in the foreground
 
+# Give the process some time to start
+sleep 30
+
+# Check if the process is still running
+if ps -p $PID > /dev/null
+then
+  echo "$GO_APP is running."
+else
+  echo "$GO_APP failed to start."
+  exit 1
+fi
+
 echo "Deployment complete."
