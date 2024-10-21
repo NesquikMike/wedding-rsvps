@@ -34,8 +34,8 @@ jobs:
       - name: Create .env file on EC2
         run: |
           echo "Creating .env file on EC2 instance"
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} << 'EOF'
-            cat <<EOT > ~/wedding-rsvps/.env
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} << 'END_OF_SCRIPT'
+            cat > ~/wedding-rsvps/.env <<EOF 
           API_KEY="${{ secrets.API_KEY }}"
           BANK_ACCOUNT_NAME="${{ secrets.BANK_ACCOUNT_NAME }}"
           BANK_ACCOUNT_NUMBER="${{ secrets.BANK_ACCOUNT_NUMBER }}"
@@ -57,7 +57,8 @@ jobs:
           VENUE_ADDRESS="${{ secrets.VENUE_ADDRESS }}"
           VENUE_TRAVEL_DETAILS="${{ secrets.VENUE_TRAVEL_DETAILS }}"
           VENUE_VAGUE="${{ secrets.VENUE_VAGUE }}"
-          EOF
+		  EOF
+          END_OF_SCRIPT
 
       - name: Ensure deploy script has permissions
         run: |
@@ -65,4 +66,4 @@ jobs:
 
       - name: SSH into EC2 and Deploy
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} 'cd wedding-rsvps && && git restore . && git pull origin main && ./deploy.sh ${{ secrets.S3_BUCKET_BACKUPS }}'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} 'cd wedding-rsvps && git restore . && git pull origin main && ./deploy.sh ${{ secrets.S3_BUCKET_BACKUPS }}'
