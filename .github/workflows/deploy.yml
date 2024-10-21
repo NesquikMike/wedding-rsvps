@@ -65,4 +65,4 @@ jobs:
 
       - name: SSH into EC2 and Deploy
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} 'cd wedding-rsvps && git pull origin main && ./deploy.sh ${{ secrets.S3_BUCKET_BACKUPS }}'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} 'cd wedding-rsvps && && git restore . && git pull origin main && ./deploy.sh ${{ secrets.S3_BUCKET_BACKUPS }}'
