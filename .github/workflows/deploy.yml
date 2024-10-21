@@ -60,10 +60,14 @@ jobs:
           EOF
           END_OF_SCRIPT
 
+      - name: SSH into EC2 and Pull Latest Changes
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} 'cd wedding-rsvps && git restore . && git pull origin main'
+
       - name: Ensure deploy script has permissions
         run: |
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} 'chmod +x ~/wedding-rsvps/deploy.sh'
 
-      - name: SSH into EC2 and Deploy
+      - name: Deploy
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} 'cd wedding-rsvps && git restore . && git pull origin main && ./deploy.sh ${{ secrets.S3_BUCKET_BACKUPS }}'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} 'cd wedding-rsvps && ./deploy.sh ${{ secrets.S3_BUCKET_BACKUPS }}'
