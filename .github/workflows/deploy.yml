@@ -57,7 +57,7 @@ jobs:
           VENUE_ADDRESS="${{ secrets.VENUE_ADDRESS }}"
           VENUE_TRAVEL_DETAILS="${{ secrets.VENUE_TRAVEL_DETAILS }}"
           VENUE_VAGUE="${{ secrets.VENUE_VAGUE }}"
-		  EOF
+          EOF
           END_OF_SCRIPT
 
       - name: Ensure deploy script has permissions
