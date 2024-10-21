@@ -35,7 +35,7 @@ echo "Building the Go application..."
 go build -o "$GO_APP"
 
 echo "Running the Go application..."
-"$GO_APP" & # The & runs it in the background; remove it if you want it to run in the foreground
+./"$GO_APP" & # The & runs it in the background; remove it if you want it to run in the foreground
 
 # Give the process some time to start
 sleep 30
