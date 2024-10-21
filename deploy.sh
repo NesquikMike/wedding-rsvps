@@ -38,7 +38,7 @@ echo "Running the Go application..."
 ./"$GO_APP" & # The & runs it in the background; remove it if you want it to run in the foreground
 
 # Give the process some time to start
-sleep 30
+sleep 5
 
 # Check if the process is still running
 if ps -p $PID > /dev/null
