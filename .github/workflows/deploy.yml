@@ -51,12 +51,9 @@ jobs:
         env:
           EC2_IP_ADDRESS: ${{ secrets.EC2_IP_ADDRESS }}
           EC2_USER: ${{ secrets.EC2_USER }}
-          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
 
         run: |
-          echo "$SSH_PRIVATE_KEY" > private_key.pem
-          chmod 600 private_key.pem
-          scp -i private_key.pem -o StrictHostKeyChecking=no wedding-rsvps $EC2_USER@$EC2_IP_ADDRESS:/path/to/destination
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no wedding-rsvps $EC2_USER@$EC2_IP_ADDRESS:/path/to/destination
 
       - name: Create .env file on EC2
         env:
