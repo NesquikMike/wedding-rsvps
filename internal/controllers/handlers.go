@@ -145,8 +145,8 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 	}
 
 	phoneNumber := req.FormValue("phone-number")
-	re := regexp.MustCompile(`^[0-9+][0-9]+$`)
-	if !re.MatchString(phoneNumber) {
+	rePhoneNumber := regexp.MustCompile(`^[0-9+][0-9]+$`)
+	if !rePhoneNumber.MatchString(phoneNumber) {
 		c.logger.Println(fmt.Sprintf("phoneNumber %s for guestCode %s is invalid", phoneNumber, guest.Code))
 		c.guestStore.UpdateGuestInvalidDetails(guest.Code, true)
 		w.WriteHeader(http.StatusBadRequest)
@@ -155,6 +155,15 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	dietaryRequirements := req.FormValue("dietary-requirements")
+	reDietaryRequirements := regexp.MustCompile(`^(?:(?:[\w'.,!\"#&()\-£$]{1,50})(?:\s+|$))+$`)
+	if len(dietaryRequirements) > 500 || !reDietaryRequirements.MatchString(dietaryRequirements) {
+		c.logger.Println(fmt.Sprintf("dietaryRequirements %s for guestCode %s is invalid", dietaryRequirements, guest.Code))
+		c.guestStore.UpdateGuestInvalidDetails(guest.Code, true)
+		w.WriteHeader(http.StatusBadRequest)
+		http.Redirect(w, req, "/", http.StatusFound)
+
+		return
+	}
 
 	c.guestStore.UpdateGuestDetails(guest.Code, email, phoneNumber, dietaryRequirements)
 
