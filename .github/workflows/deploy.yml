@@ -114,6 +114,7 @@ jobs:
           END_OF_SCRIPT
 
       - name: SSH into EC2 and Pull Latest Changes
+        env:
           EC2_IP_ADDRESS: ${{ secrets.EC2_IP_ADDRESS }}
           EC2_USER: ${{ secrets.EC2_USER }}
 
@@ -121,6 +122,7 @@ jobs:
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP_ADDRESS 'cd wedding-rsvps && git restore . && git pull origin main'
 
       - name: Ensure deploy script has permissions
+        env:
           EC2_IP_ADDRESS: ${{ secrets.EC2_IP_ADDRESS }}
           EC2_USER: ${{ secrets.EC2_USER }}
 
@@ -128,6 +130,7 @@ jobs:
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP_ADDRESS 'chmod +x ~/wedding-rsvps/deploy.sh'
 
       - name: Deploy
+        env:
           EC2_IP_ADDRESS: ${{ secrets.EC2_IP_ADDRESS }}
           EC2_USER: ${{ secrets.EC2_USER }}
 
