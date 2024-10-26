@@ -22,4 +22,5 @@ type ViewData struct {
 	BankAccountNumber     string
 	FooterMessage         template.HTML
 	Guest                 *Guest
+	SessionData           *SessionData
 }

@@ -117,6 +117,7 @@ func (c Controller) GetRSVPs(w http.ResponseWriter, r *http.Request) {
 		"Code",
 		"Email",
 		"Phone Number",
+		"Meal Choice",
 		"Dietary Requirements",
 		"Attendance",
 		"Invalid Details",
@@ -134,7 +135,7 @@ func (c Controller) GetRSVPs(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var id int
 		var name, code string
-		var email, phoneNumber, dietaryRequirements sql.NullString
+		var email, phoneNumber, mealChoice, dietaryRequirements sql.NullString
 		var attendance, invalidDetails, detailsProvided, formStarted, formCompleted sql.NullBool
 		if err := rows.Scan(
 			&id,
@@ -142,6 +143,7 @@ func (c Controller) GetRSVPs(w http.ResponseWriter, r *http.Request) {
 			&code,
 			&email,
 			&phoneNumber,
+			&mealChoice,
 			&dietaryRequirements,
 			&attendance,
 			&invalidDetails,
@@ -154,7 +156,7 @@ func (c Controller) GetRSVPs(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var emailStr, phoneNumberStr, dietaryRequirementsStr string
+		var emailStr, phoneNumberStr, mealChoiceStr, dietaryRequirementsStr string
 		var attendanceBool, invalidDetailsBool, detailsProvidedBool, formStartedBool, formCompletedBool bool
 
 		if email.Valid {
@@ -162,6 +164,9 @@ func (c Controller) GetRSVPs(w http.ResponseWriter, r *http.Request) {
 		}
 		if phoneNumber.Valid {
 			phoneNumberStr = phoneNumber.String
+		}
+		if mealChoice.Valid {
+			mealChoiceStr = mealChoice.String
 		}
 		if dietaryRequirements.Valid {
 			dietaryRequirementsStr = dietaryRequirements.String
@@ -185,6 +190,7 @@ func (c Controller) GetRSVPs(w http.ResponseWriter, r *http.Request) {
 			code,
 			emailStr,
 			phoneNumberStr,
+			mealChoiceStr,
 			dietaryRequirementsStr,
 			strconv.FormatBool(attendanceBool),
 			strconv.FormatBool(invalidDetailsBool),

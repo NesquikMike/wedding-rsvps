@@ -36,6 +36,11 @@ func (i GuestStore) SetupDatabase(guestNames [][]string) error {
 		return err
 	}
 
+	err = i.createSessionDataTable()
+	if err != nil {
+		return err
+	}
+
 	log.Println("Database and tables set up and populated successfully!")
 	return nil
 }
@@ -47,6 +52,7 @@ func (i GuestStore) createGuestsTable(guestNames [][]string) error {
 		code TEXT NOT NULL,
 		email TEXT,
 		phone_number TEXT,
+		meal_choice BOOLEAN,
         dietary_requirements TEXT,
         attendance BOOLEAN,
         invalid_details BOOLEAN,
@@ -108,18 +114,19 @@ func (i GuestStore) InsertGuest(name string) error {
 	return err
 }
 
-func (i GuestStore) UpdateGuestDetails(code, email, phoneNumber, dietaryRequirements string) error {
+func (i GuestStore) UpdateGuestDetails(code, email, phoneNumber, mealChoice, dietaryRequirements string) error {
 	query := `UPDATE guests
               SET
 				email = ?,
 				phone_number = ?, 
+				meal_choice = ?, 
 				dietary_requirements = ?, 
 				invalid_details = false, 
 				details_provided = true, 
 				form_completed = true 
               WHERE code = ?`
 
-	result, err := i.db.Exec(query, email, phoneNumber, dietaryRequirements, code)
+	result, err := i.db.Exec(query, email, phoneNumber, mealChoice, dietaryRequirements, code)
 	if err != nil {
 		return fmt.Errorf("failed to update guest: %v", err)
 	}
@@ -200,6 +207,7 @@ func (i GuestStore) GetGuest(code string) (*models.Guest, error) {
 		code, 
 		email, 
 		phone_number, 
+		meal_choice,
 		dietary_requirements,
 		attendance,
 		invalid_details,
@@ -214,6 +222,7 @@ func (i GuestStore) GetGuest(code string) (*models.Guest, error) {
 
 	var email sql.NullString
 	var phoneNumber sql.NullString
+	var mealChoice sql.NullString
 	var dietaryRequirements sql.NullString
 	var attendance sql.NullBool
 	var invalidDetails sql.NullBool
@@ -227,6 +236,7 @@ func (i GuestStore) GetGuest(code string) (*models.Guest, error) {
 		&guest.Code,
 		&email,
 		&phoneNumber,
+		&mealChoice,
 		&dietaryRequirements,
 		&attendance,
 		&invalidDetails,
@@ -240,6 +250,9 @@ func (i GuestStore) GetGuest(code string) (*models.Guest, error) {
 	}
 	if phoneNumber.Valid {
 		guest.PhoneNumber = phoneNumber.String
+	}
+	if mealChoice.Valid {
+		guest.MealChoice = mealChoice.String
 	}
 	if dietaryRequirements.Valid {
 		guest.DietaryRequirements = dietaryRequirements.String
@@ -299,6 +312,7 @@ func (i GuestStore) GetRSVPs() (*sql.Rows, error) {
 		code, 
 		email, 
 		phone_number, 
+		meal_choice,
 		dietary_requirements,
 		attendance,
 		invalid_details,

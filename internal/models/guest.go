@@ -8,6 +8,7 @@ type Guest struct {
 	Code                string
 	Email               string
 	PhoneNumber         string
+	MealChoice          string
 	DietaryRequirements string
 	Attendance          bool
 	InvalidDetails      bool

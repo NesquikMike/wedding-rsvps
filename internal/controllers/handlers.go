@@ -39,13 +39,13 @@ func NewController(isProd bool, t *template.Template, guestStore database.GuestS
 	}
 }
 
-var InvalidGuestError error = errors.New("guestCode is invalid")
+var ErrInvalidGuest error = errors.New("guestCode is invalid")
 
 func (c Controller) RSVP(w http.ResponseWriter, req *http.Request) {
 	var guest *models.Guest
 	guest, err := c.getGuestFromCookie(w, req)
 	if err != nil {
-		if err == http.ErrNoCookie || err == InvalidGuestError {
+		if err == http.ErrNoCookie || err == ErrInvalidGuest {
 			guestCode := req.FormValue("guest-code")
 			re := regexp.MustCompile(`^[A-Z][a-z]+-[A-Za-z0-9]+$`)
 			if len(guestCode) != 12 || !re.MatchString(guestCode) {
@@ -109,14 +109,14 @@ func (c Controller) getGuestFromCookie(w http.ResponseWriter, req *http.Request)
 
 	// Stop an unneccessary read of the DB
 	if guestCode == models.InvalidGuestKey {
-		return &models.InvalidGuest, InvalidGuestError
+		return &models.InvalidGuest, ErrInvalidGuest
 	}
 
 	guest, err = c.guestStore.GetGuest(guestCode)
 	if err != nil {
 		return nil, err
 	} else if guest == nil {
-		return &models.InvalidGuest, fmt.Errorf("guestCode %s: %w", guestCode, InvalidGuestError)
+		return &models.InvalidGuest, fmt.Errorf("guestCode %s: %w", guestCode, ErrInvalidGuest)
 	}
 
 	return guest, nil
@@ -125,7 +125,7 @@ func (c Controller) getGuestFromCookie(w http.ResponseWriter, req *http.Request)
 func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 	guest, err := c.getGuestFromCookie(w, req)
 	if err != nil || guest == nil {
-		if err == http.ErrNoCookie || errors.Unwrap(err) == InvalidGuestError {
+		if err == http.ErrNoCookie || errors.Unwrap(err) == ErrInvalidGuest {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -135,37 +135,70 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	detailsAllValid := true
+
 	email := req.FormValue("email")
 	if !strings.Contains(email, "@") || !strings.Contains(email, ".") || len(email) < 6 {
 		c.logger.Println(fmt.Sprintf("email %s for guestCode %s is invalid", email, guest.Code))
-		c.guestStore.UpdateGuestInvalidDetails(guest.Code, true)
-		w.WriteHeader(http.StatusBadRequest)
-		http.Redirect(w, req, "/", http.StatusFound)
-		return
+		if err := c.guestStore.UpdateGuestInvalidDetails(guest.Code, true); err != nil {
+			c.logger.Printf("could not update that guest %s details are invalid: %v", guest.Code, err)
+		}
+		if err := c.guestStore.UpdateSessionInvalidEmail(guest.Code, true); err != nil {
+			c.logger.Printf("could not update session %s that email is invalid: %v", guest.Code, err)
+		}
+		detailsAllValid = false
+	} else {
+		if err := c.guestStore.UpdateSessionInvalidEmail(guest.Code, false); err != nil {
+			c.logger.Printf("could not update session %s that email is valid: %v", guest.Code, err)
+		}
 	}
 
 	phoneNumber := req.FormValue("phone-number")
 	rePhoneNumber := regexp.MustCompile(`^[0-9+][0-9]+$`)
 	if !rePhoneNumber.MatchString(phoneNumber) {
 		c.logger.Println(fmt.Sprintf("phoneNumber %s for guestCode %s is invalid", phoneNumber, guest.Code))
-		c.guestStore.UpdateGuestInvalidDetails(guest.Code, true)
-		w.WriteHeader(http.StatusBadRequest)
-		http.Redirect(w, req, "/", http.StatusFound)
-
-		return
+		if err := c.guestStore.UpdateGuestInvalidDetails(guest.Code, true); err != nil {
+			c.logger.Printf("could not update that guest %s details are invalid: %v", guest.Code, err)
+		}
+		if err := c.guestStore.UpdateSessionInvalidPhoneNumber(guest.Code, true); err != nil {
+			c.logger.Printf("could not update session %s that phone number is invalid: %v", guest.Code, err)
+		}
+		detailsAllValid = false
+	} else {
+		if err := c.guestStore.UpdateSessionInvalidPhoneNumber(guest.Code, false); err != nil {
+			c.logger.Printf("could not update session %s that phone number is valid: %v", guest.Code, err)
+		}
 	}
+
+	mealChoice := req.FormValue("meal-choice")
+
 	dietaryRequirements := req.FormValue("dietary-requirements")
 	reDietaryRequirements := regexp.MustCompile(`^(?:(?:[\w'.,!\"#&()\-£$]{1,50})(?:\s+|$))+$`)
-	if len(dietaryRequirements) > 500 || !reDietaryRequirements.MatchString(dietaryRequirements) {
-		c.logger.Println(fmt.Sprintf("dietaryRequirements %s for guestCode %s is invalid", dietaryRequirements, guest.Code))
-		c.guestStore.UpdateGuestInvalidDetails(guest.Code, true)
-		w.WriteHeader(http.StatusBadRequest)
-		http.Redirect(w, req, "/", http.StatusFound)
-
-		return
+	// if len(dietaryRequirements) > 0 {
+		if len(dietaryRequirements) > 500 || !reDietaryRequirements.MatchString(dietaryRequirements) {
+			c.logger.Println(fmt.Sprintf("dietaryRequirements %s for guestCode %s is invalid", dietaryRequirements, guest.Code))
+			if err := c.guestStore.UpdateGuestInvalidDetails(guest.Code, true); err != nil {
+				c.logger.Printf("could not update that guest %s details are invalid: %v", guest.Code, err)
+			}
+			if err := c.guestStore.UpdateSessionInvalidDietaryRequirements(guest.Code, true); err != nil {
+				c.logger.Printf("could not update session %s that dietary requirements are invalid: %v", guest.Code, err)
+			}
+			detailsAllValid = false
+		// }
+	} else {
+		if err := c.guestStore.UpdateSessionInvalidDietaryRequirements(guest.Code, false); err != nil {
+			c.logger.Printf("could not update session %s that dietary requirements are valid: %v", guest.Code, err)
+		}
 	}
 
-	c.guestStore.UpdateGuestDetails(guest.Code, email, phoneNumber, dietaryRequirements)
+	if !detailsAllValid {
+			http.Redirect(w, req, "/", http.StatusFound)
+			return
+	}
+
+	if err := c.guestStore.UpdateGuestDetails(guest.Code, email, phoneNumber, mealChoice, dietaryRequirements); err != nil {
+		c.logger.Printf("could not update guest %s details: %v", guest.Code, err)
+	}
 
 	http.Redirect(w, req, "/", http.StatusFound)
 }
@@ -173,7 +206,7 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 func (c Controller) ChangeDetails(w http.ResponseWriter, req *http.Request) {
 	guest, err := c.getGuestFromCookie(w, req)
 	if err != nil {
-		if err == http.ErrNoCookie || errors.Unwrap(err) == InvalidGuestError {
+		if err == http.ErrNoCookie || errors.Unwrap(err) == ErrInvalidGuest {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -196,7 +229,7 @@ func (c Controller) ChangeDetails(w http.ResponseWriter, req *http.Request) {
 func (c Controller) ChangeAttendanceResponse(w http.ResponseWriter, req *http.Request) {
 	guest, err := c.getGuestFromCookie(w, req)
 	if err != nil {
-		if err == http.ErrNoCookie || errors.Unwrap(err) == InvalidGuestError {
+		if err == http.ErrNoCookie || errors.Unwrap(err) == ErrInvalidGuest {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -226,7 +259,7 @@ func (c Controller) Index(w http.ResponseWriter, req *http.Request) {
 			c.logger.Printf("new visitor")
 			c.tpl.ExecuteTemplate(w, "index.gohtml", c.viewData)
 			return
-		case err == InvalidGuestError || errors.Unwrap(err) == InvalidGuestError:
+		case err == ErrInvalidGuest || errors.Unwrap(err) == ErrInvalidGuest:
 			c.logger.Printf("invalid guest code")
 			c.tpl.ExecuteTemplate(w, "invalid_guest.gohtml", c.viewData)
 			return
@@ -259,6 +292,11 @@ func (c Controller) Index(w http.ResponseWriter, req *http.Request) {
 			c.tpl.ExecuteTemplate(w, "guest_declined.gohtml", c.viewData)
 			return
 		case guest.InvalidDetails:
+			sessionData, err := c.guestStore.GetSessionData(guest.Code)
+			if err != nil {
+				c.logger.Printf("for guest %v could not get session data: %v\n", guest.Code, err)
+			}
+			c.viewData.SessionData = sessionData
 			c.guestStore.UpdatePageVisit(guest.ID, "guest-details")
 			c.tpl.ExecuteTemplate(w, "invalid_details.gohtml", c.viewData)
 			return
