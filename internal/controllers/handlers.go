@@ -278,7 +278,7 @@ func (c Controller) StaticHandler(w http.ResponseWriter, req *http.Request) {
 	objectKey := strings.TrimPrefix(req.URL.Path, "/assets")
 	var s3URL string
 	if c.isProd {
-		s3URL = "https://" + c.s3AssetsBucket + ".s3.amazonaws.com/" + objectKey
+		s3URL = fmt.Sprintf("https://s3.eu-west-2.amazonaws.com/%s/%s", c.s3AssetsBucket, objectKey)
 	} else {
 		s3URL = "http://localhost:4566/" + c.s3AssetsBucket + objectKey
 	}
