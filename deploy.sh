@@ -48,3 +48,4 @@ else
 fi
 
 echo "Deployment complete."
+exit 0
