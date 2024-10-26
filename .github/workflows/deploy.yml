@@ -67,7 +67,7 @@ jobs:
           DATE: ${{ secrets.DATE }}
           ENVIRONMENT: ${{ secrets.ENVIRONMENT }}
           FOOTER_MESSAGE: ${{ secrets.FOOTER_MESSAGE }}
-          MAIN_PHOTO_AND_FILE_NAME: ${{ secrets.MAIN_PHOTO_AND_FILE_NAME }}
+          MAIN_PHOTO_FILE_NAME: ${{ secrets.MAIN_PHOTO_FILE_NAME }}
           PARTNER_ONE: ${{ secrets.PARTNER_ONE }}
           PARTNER_TWO: ${{ secrets.PARTNER_TWO }}
           POST_CEREMONY_ITINERARY: ${{ secrets.POST_CEREMONY_ITINERARY }}
