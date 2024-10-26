@@ -14,14 +14,21 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up SSH key
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          echo "$EC2_SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
     
       - name: SSH into EC2 and check if folder exists, pull from GitHub if not
+        env:
+          EC2_IP_ADDRESS: ${{ secrets.EC2_IP_ADDRESS }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP_ADDRESS << 'EOF'
             if [ ! -d "wedding-rsvps" ]; then
               echo "Folder does not exist. Cloning repository..."
               git clone https://github.com/NesquikMike/wedding-rsvps.git
@@ -31,43 +38,98 @@ jobs:
           EOF
         shell: bash
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Build binary
+        run: |
+          go build -o wedding-rsvps main.go
+
+      - name: Upload binary to EC2
+        env:
+          EC2_IP_ADDRESS: ${{ secrets.EC2_IP_ADDRESS }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+
+        run: |
+          echo "$SSH_PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          scp -i private_key.pem -o StrictHostKeyChecking=no wedding-rsvps $EC2_USER@$EC2_IP_ADDRESS:/path/to/destination
+
       - name: Create .env file on EC2
+        env:
+          EC2_IP_ADDRESS: ${{ secrets.EC2_IP_ADDRESS }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          API_KEY: ${{ secrets.API_KEY }}
+          BANK_ACCOUNT_NAME: ${{ secrets.BANK_ACCOUNT_NAME }}
+          BANK_ACCOUNT_NUMBER: ${{ secrets.BANK_ACCOUNT_NUMBER }}
+          BANK_NAME: ${{ secrets.BANK_NAME }}
+          BANK_SORT_CODE: ${{ secrets.BANK_SORT_CODE }}
+          DATE: ${{ secrets.DATE }}
+          ENVIRONMENT: ${{ secrets.ENVIRONMENT }}
+          FOOTER_MESSAGE: ${{ secrets.FOOTER_MESSAGE }}
+          MAIN_PHOTO_AND_FILE_NAME: ${{ secrets.MAIN_PHOTO_AND_FILE_NAME }}
+          PARTNER_ONE: ${{ secrets.PARTNER_ONE }}
+          PARTNER_TWO: ${{ secrets.PARTNER_TWO }}
+          POST_CEREMONY_ITINERARY: ${{ secrets.POST_CEREMONY_ITINERARY }}
+          S3_BUCKET_ASSETS: ${{ secrets.S3_BUCKET_ASSETS }}
+          S3_BUCKET_BACKUPS: ${{ secrets.S3_BUCKET_BACKUPS }}
+          SECRET_COOKIE_KEY: ${{ secrets.SECRET_COOKIE_KEY }}
+          TIME_ARRIVAL: ${{ secrets.TIME_ARRIVAL }}
+          TIME_START: ${{ secrets.TIME_START }}
+          URL: ${{ secrets.URL }}
+          VENUE_ADDRESS: ${{ secrets.VENUE_ADDRESS }}
+          VENUE_TRAVEL_DETAILS: ${{ secrets.VENUE_TRAVEL_DETAILS }}
+          VENUE_VAGUE: ${{ secrets.VENUE_VAGUE }}
+          
+
         run: |
           echo "Creating .env file on EC2 instance"
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} << 'END_OF_SCRIPT'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP_ADDRESS << 'END_OF_SCRIPT'
             cat > ~/wedding-rsvps/.env <<EOF 
-          API_KEY="${{ secrets.API_KEY }}"
-          BANK_ACCOUNT_NAME="${{ secrets.BANK_ACCOUNT_NAME }}"
-          BANK_ACCOUNT_NUMBER="${{ secrets.BANK_ACCOUNT_NUMBER }}"
-          BANK_NAME="${{ secrets.BANK_NAME }}"
-          BANK_SORT_CODE="${{ secrets.BANK_SORT_CODE }}"
-          DATE="${{ secrets.DATE }}"
-          ENVIRONMENT="${{ secrets.ENVIRONMENT }}"
-          FOOTER_MESSAGE="${{ secrets.FOOTER_MESSAGE }}"
-          MAIN_PHOTO_AND_FILE_NAME="${{ secrets.MAIN_PHOTO_AND_FILE_NAME }}"
-          PARTNER_ONE="${{ secrets.PARTNER_ONE }}"
-          PARTNER_TWO="${{ secrets.PARTNER_TWO }}"
-          POST_CEREMONY_ITINERARY="${{ secrets.POST_CEREMONY_ITINERARY }}"
-          S3_BUCKET_ASSETS="${{ secrets.S3_BUCKET_ASSETS }}"
-          S3_BUCKET_BACKUPS="${{ secrets.S3_BUCKET_BACKUPS }}"
-          SECRET_COOKIE_KEY="${{ secrets.SECRET_COOKIE_KEY }}"
-          TIME_ARRIVAL="${{ secrets.TIME_ARRIVAL }}"
-          TIME_START="${{ secrets.TIME_START }}"
-          URL="${{ secrets.URL }}"
-          VENUE_ADDRESS="${{ secrets.VENUE_ADDRESS }}"
-          VENUE_TRAVEL_DETAILS="${{ secrets.VENUE_TRAVEL_DETAILS }}"
-          VENUE_VAGUE="${{ secrets.VENUE_VAGUE }}"
+          API_KEY="$API_KEY"
+          BANK_ACCOUNT_NAME="$BANK_ACCOUNT_NAME"
+          BANK_ACCOUNT_NUMBER="$BANK_ACCOUNT_NUMBER"
+          BANK_NAME="$BANK_NAME"
+          BANK_SORT_CODE="$BANK_SORT_CODE"
+          DATE="$DATE"
+          ENVIRONMENT="$ENVIRONMENT"
+          FOOTER_MESSAGE="$FOOTER_MESSAGE"
+          MAIN_PHOTO_AND_FILE_NAME="$MAIN_PHOTO_AND_FILE_NAME"
+          PARTNER_ONE="$PARTNER_ONE"
+          PARTNER_TWO="$PARTNER_TWO"
+          POST_CEREMONY_ITINERARY="$POST_CEREMONY_ITINERARY"
+          S3_BUCKET_ASSETS="$S3_BUCKET_ASSETS"
+          S3_BUCKET_BACKUPS="$S3_BUCKET_BACKUPS"
+          SECRET_COOKIE_KEY="$SECRET_COOKIE_KEY"
+          TIME_ARRIVAL="$TIME_ARRIVAL"
+          TIME_START="$TIME_START"
+          URL="$URL"
+          VENUE_ADDRESS="$VENUE_ADDRESS"
+          VENUE_TRAVEL_DETAILS="$VENUE_TRAVEL_DETAILS"
+          VENUE_VAGUE="$VENUE_VAGUE"
           EOF
           END_OF_SCRIPT
 
       - name: SSH into EC2 and Pull Latest Changes
+          EC2_IP_ADDRESS: ${{ secrets.EC2_IP_ADDRESS }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} 'cd wedding-rsvps && git restore . && git pull origin main'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP_ADDRESS 'cd wedding-rsvps && git restore . && git pull origin main'
 
       - name: Ensure deploy script has permissions
+          EC2_IP_ADDRESS: ${{ secrets.EC2_IP_ADDRESS }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} 'chmod +x ~/wedding-rsvps/deploy.sh'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP_ADDRESS 'chmod +x ~/wedding-rsvps/deploy.sh'
 
       - name: Deploy
+          EC2_IP_ADDRESS: ${{ secrets.EC2_IP_ADDRESS }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_IP_ADDRESS }} 'cd wedding-rsvps && ./deploy.sh ${{ secrets.S3_BUCKET_BACKUPS }}'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP_ADDRESS 'cd wedding-rsvps && ./deploy.sh ${{ secrets.S3_BUCKET_BACKUPS }}'
