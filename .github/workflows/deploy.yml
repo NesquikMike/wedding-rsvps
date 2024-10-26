@@ -105,33 +105,31 @@ jobs:
 
         run: |
           echo "Creating .env file on EC2 instance"
-          echo $TIME_START
-          echo "$TIME_START"
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP_ADDRESS << 'END_OF_SCRIPT'
-            cat > ~/wedding-rsvps/.env <<EOF 
-          API_KEY="$API_KEY"
-          BANK_ACCOUNT_NAME="$BANK_ACCOUNT_NAME"
-          BANK_ACCOUNT_NUMBER="$BANK_ACCOUNT_NUMBER"
-          BANK_NAME="$BANK_NAME"
-          BANK_SORT_CODE="$BANK_SORT_CODE"
-          DATE="$DATE"
-          ENVIRONMENT="$ENVIRONMENT"
-          FOOTER_MESSAGE="$FOOTER_MESSAGE"
-          MAIN_PHOTO_AND_FILE_NAME="$MAIN_PHOTO_AND_FILE_NAME"
-          PARTNER_ONE="$PARTNER_ONE"
-          PARTNER_TWO="$PARTNER_TWO"
-          POST_CEREMONY_ITINERARY="$POST_CEREMONY_ITINERARY"
-          S3_BUCKET_ASSETS="$S3_BUCKET_ASSETS"
-          S3_BUCKET_BACKUPS="$S3_BUCKET_BACKUPS"
-          SECRET_COOKIE_KEY="$SECRET_COOKIE_KEY"
-          TIME_ARRIVAL="$TIME_ARRIVAL"
-          TIME_START="$TIME_START"
-          URL="$URL"
-          VENUE_ADDRESS="$VENUE_ADDRESS"
-          VENUE_TRAVEL_DETAILS="$VENUE_TRAVEL_DETAILS"
-          VENUE_VAGUE="$VENUE_VAGUE"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP_ADDRESS <<EOF
+            cat > ~/wedding-rsvps/.env <<ENVVARS 
+          API_KEY="${API_KEY}"
+          BANK_ACCOUNT_NAME="${BANK_ACCOUNT_NAME}"
+          BANK_ACCOUNT_NUMBER="${BANK_ACCOUNT_NUMBER}"
+          BANK_NAME="${BANK_NAME}"
+          BANK_SORT_CODE="${BANK_SORT_CODE}"
+          DATE="${DATE}"
+          ENVIRONMENT="${ENVIRONMENT}"
+          FOOTER_MESSAGE="${FOOTER_MESSAGE}"
+          MAIN_PHOTO_AND_FILE_NAME="${MAIN_PHOTO_AND_FILE_NAME}"
+          PARTNER_ONE="${PARTNER_ONE}"
+          PARTNER_TWO="${PARTNER_TWO}"
+          POST_CEREMONY_ITINERARY="${POST_CEREMONY_ITINERARY}"
+          S3_BUCKET_ASSETS="${S3_BUCKET_ASSETS}"
+          S3_BUCKET_BACKUPS="${S3_BUCKET_BACKUPS}"
+          SECRET_COOKIE_KEY="${SECRET_COOKIE_KEY}"
+          TIME_ARRIVAL="${TIME_ARRIVAL}"
+          TIME_START="${TIME_START}"
+          URL="${URL}"
+          VENUE_ADDRESS="${VENUE_ADDRESS}"
+          VENUE_TRAVEL_DETAILS="${VENUE_TRAVEL_DETAILS}"
+          VENUE_VAGUE="${VENUE_VAGUE}"
+          ENVVARS
           EOF
-          END_OF_SCRIPT
 
       - name: SSH into EC2 and Pull Latest Changes
         env:
