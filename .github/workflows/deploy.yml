@@ -81,7 +81,6 @@ jobs:
           VENUE_TRAVEL_DETAILS: ${{ secrets.VENUE_TRAVEL_DETAILS }}
           VENUE_VAGUE: ${{ secrets.VENUE_VAGUE }}
           
-
         run: |
           echo "Creating .env file on EC2 instance"
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP_ADDRESS <<EOF
@@ -94,7 +93,7 @@ jobs:
           DATE="${DATE}"
           ENVIRONMENT="${ENVIRONMENT}"
           FOOTER_MESSAGE="${FOOTER_MESSAGE}"
-          MAIN_PHOTO_AND_FILE_NAME="${MAIN_PHOTO_AND_FILE_NAME}"
+          MAIN_PHOTO_FILE_NAME="${MAIN_PHOTO_FILE_NAME}"
           PARTNER_ONE="${PARTNER_ONE}"
           PARTNER_TWO="${PARTNER_TWO}"
           POST_CEREMONY_ITINERARY="${POST_CEREMONY_ITINERARY}"
