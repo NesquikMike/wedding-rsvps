@@ -34,12 +34,10 @@ else
     echo "$GUESTS_DB already exists."
 fi
 
-ps
-
 # Find the PID of any currently running instance of the app
-CURRENT_PID=$(pgrep -f "$GO_APP")
+CURRENT_PID=$(pgrep -f "$GO_APP" | grep -v $$ | head -n 1)
 
-if [ -n "$CURRENT_PID" ]; then
+if [ -n "$CURRENT_PID" ] && ps -p "$CURRENT_PID" > /dev/null 2>&1; then
   echo "Terminating the existing instance of $GO_APP with PID $CURRENT_PID..."
   kill -SIGTERM "$CURRENT_PID"
 
