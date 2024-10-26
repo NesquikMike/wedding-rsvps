@@ -34,6 +34,7 @@ else
     echo "$GUESTS_DB already exists."
 fi
 
+ps
 
 # Find the PID of any currently running instance of the app
 CURRENT_PID=$(pgrep -f "$GO_APP")
