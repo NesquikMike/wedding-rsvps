@@ -11,6 +11,9 @@ GUESTS_DB="guests.db"
 NAMES_CSV="names.csv"
 GO_APP="wedding-rsvps" 
 
+# Trap any errors and ensure exit
+trap 'exit 1' ERR
+
 # Check if guests.db exists
 if [ ! -f "$GUESTS_DB" ]; then
     echo "$GUESTS_DB does not exist. Copying from S3..."
@@ -31,10 +34,31 @@ else
     echo "$GUESTS_DB already exists."
 fi
 
+
+# Find the PID of any currently running instance of the app
+CURRENT_PID=$(pgrep -f "$GO_APP")
+
+if [ -n "$CURRENT_PID" ]; then
+  echo "Terminating the existing instance of $GO_APP with PID $CURRENT_PID..."
+  kill -SIGTERM "$CURRENT_PID"
+
+  # Wait for the process to terminate
+  sleep 3
+
+  if ps -p "$CURRENT_PID" > /dev/null; then
+    echo "$GO_APP did not terminate gracefully; force-killing."
+    kill -9 "$CURRENT_PID"
+  else
+    echo "$GO_APP terminated successfully."
+  fi
+else
+  echo "No existing instance of $GO_APP found."
+fi
+
 mv ./"$GO_APP"-temp ./"$GO_APP"
 
 echo "Running the Go application..."
-./"$GO_APP" & # The & runs it in the background; remove it if you want it to run in the foreground
+nohup ./"$GO_APP" > /dev/null 2>&1 & # The & runs it in the background; remove it if you want it to run in the foreground
 PID=$!                     # Capture PID
 
 # Give the process some time to start

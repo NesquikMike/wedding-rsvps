@@ -130,6 +130,7 @@ jobs:
         env:
           EC2_IP_ADDRESS: ${{ secrets.EC2_IP_ADDRESS }}
           EC2_USER: ${{ secrets.EC2_USER }}
+          S3_BUCKET_BACKUPS: ${{ secrets.S3_BUCKET_BACKUPS }}
 
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP_ADDRESS 'cd wedding-rsvps && ./deploy.sh ${{ secrets.S3_BUCKET_BACKUPS }}'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP_ADDRESS 'cd wedding-rsvps && ./deploy.sh $S3_BUCKET_BACKUPS'

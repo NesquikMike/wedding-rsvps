@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"database/sql"
 	"encoding/csv"
 	"encoding/hex"
@@ -11,7 +12,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/nesquikmike/wedding-rsvps/internal/backup"
@@ -125,6 +128,10 @@ func main() {
 
 	s3BucketAssets := envVars["S3_BUCKET_ASSETS"]
 
+	srv := &http.Server{
+		Addr: ":8080",
+	}
+
 	c := controllers.NewController(isProd, tpl, guestStore, log.Default(), &viewData, secretCookieKey, apiKey, s3BucketAssets)
 	if s3BucketAssets != "" {
 		http.HandleFunc("/assets/", c.StaticHandler)
@@ -142,7 +149,32 @@ func main() {
 	http.HandleFunc("/api/get-rsvps", c.ApiKeyMiddleware(c.GetRSVPs))
 	http.HandleFunc("/api/get-visits-data", c.ApiKeyMiddleware(c.GetVisitsData))
 	http.Handle("/favicon.ico", http.NotFoundHandler())
-	http.ListenAndServe(":8080", nil)
+
+	// Channel to listen for termination signals
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	// Start the server in a goroutine
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("ListenAndServe(): %v", err)
+		}
+	}()
+	log.Print("Server is running on port 8080...")
+
+	// Wait for a termination signal
+	<-quit
+	log.Print("Shutting down gracefully...")
+
+	// Create a context with a timeout for the shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	// Attempt a graceful shutdown
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+	log.Print("Server stopped.")
 }
 
 func readCSV(filePath string) ([][]string, error) {
