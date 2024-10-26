@@ -92,6 +92,8 @@ jobs:
 
         run: |
           echo "Creating .env file on EC2 instance"
+          echo $TIME_START
+          echo "$TIME_START"
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP_ADDRESS << 'END_OF_SCRIPT'
             cat > ~/wedding-rsvps/.env <<EOF 
           API_KEY="$API_KEY"
