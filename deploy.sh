@@ -33,6 +33,7 @@ fi
 
 echo "Running the Go application..."
 ./"$GO_APP" & # The & runs it in the background; remove it if you want it to run in the foreground
+PID=$!                     # Capture PID
 
 # Give the process some time to start
 sleep 5
