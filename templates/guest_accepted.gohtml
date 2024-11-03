@@ -1,26 +1,34 @@
 {{ template "header" . }}
+<div class="sub-container">
   <h3>You've confirmed you can attend, hooray! We'll see you at the wedding {{ .Guest.Name }}!</h3>
   <p>The venue address is {{ .VenueAddress }}</p>
   <p>{{ .VenueTravelDetails }}</p>
   <h4>Itinerary:</h4>
   <p>
-    Time of Arrival: {{ .TimeArrival }}<br>
-	Ceremony Begins: {{ .TimeStart }}<br>
+    <span class="light-bold">Time of Arrival:</span> {{ .TimeArrival }}<br>
+	<span class="light-bold">Ceremony Begins:</span> {{ .TimeStart }}<br>
 	{{ .PostCeremonyItinerary }}
   </p>
+</div>
+<img class="spacer" src="assets/img/spacer.png" />
+<div class="sub-container">
   <h4>Here are the details you provided in case you need to see them again:</h4>
-  <p>Email: {{ .Guest.Email }}<br>
-  Phone Number: {{ .Guest.PhoneNumber }}<br>
+  <p><span class="light-bold">Email:</span> {{ .Guest.Email }}<br>
+  <span class="light-bold">Phone Number:</span> {{ .Guest.PhoneNumber }}<br>
   {{ if eq .Guest.MealChoice "meat" }}
-  Meal Choice: Meat (contains beef, gluten & alcohol)<br>
+  <span class="light-bold">Meal Choice:</span> Meat (contains beef, gluten & alcohol)<br>
   {{ else if eq .Guest.MealChoice "vegetarian" }}
-  Meal Choice: Vegetarian (contains gluten & cheese)<br>
+  <span class="light-bold">Meal Choice:</span> Vegetarian (contains gluten & cheese)<br>
   {{ end }}
   {{ if .Guest.DietaryRequirements }}
-  Dietary Requirements: {{ .Guest.DietaryRequirements }}</p>
+  <span class="light-bold">Dietary Requirements:</span> {{ .Guest.DietaryRequirements }}</p>
   {{ else }}
-  Dietary Requirements: None</p>
+  <span class="light-bold">Dietary Requirements:</span> None</p>
   {{ end }}
   <p><a href="/change-details">You can change your details here</a> and if you can no longer make it you can <a href="/change-attendance-response">let us know here</a>.</p>
+</div>
+<img class="spacer" src="assets/img/spacer.png" />
+<div class="sub-container">
   <p><a href="/reset-guest">Click here if you need to RSVP for someone else.</a></p>
+</div>
 {{ template "footer" . }}

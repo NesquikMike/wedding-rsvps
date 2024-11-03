@@ -78,7 +78,7 @@ body {
 	max-width: 1080px;
 }
 
-.title {
+.sub-container {
 	display: grid;
 	grid-template-columns: 1fr;
 	justify-items: center;
@@ -87,9 +87,19 @@ body {
 	word-break: break-word;
 }
 
+.spacer {
+	margin: 0vh 10.472vw;
+	max-width: 79.056vw;
+	height: 4vh;
+	width: auto;
+}
+
 img {
 	width: 100%;
-	margin: 8px 0px;
+}
+
+br {
+	margin 0.5vh 0vw;
 }
 
 p {
@@ -119,4 +129,14 @@ h4 {
 .form-label {
 	margin: 4px 0px 0px 0px;
 	font-weight: 600;
+}
+
+.light-bold {
+	font-weight: 550;
+	display: inline;
+}
+
+#dietary-requirements {
+	max-width: 75%;
+	height: 72px;
 }

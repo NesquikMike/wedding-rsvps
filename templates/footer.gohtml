@@ -1,5 +1,7 @@
 {{ define "footer" }}
   {{ if and .Guest .Guest.FormCompleted }}
+    <img class="spacer" src="assets/img/spacer.png" />
+	<div class="sub-container">
     <h4>Wedding Gifts:</h4>
 	{{ if .Guest.Attendance }}
     <p>Having you there with us is the greatest gift of all. Therefore we're not expecting any gifts. However if you would like to give a contribution towards our future together, we would be so grateful. You can bring a cash gift on the day, or if you'd prefer, you can send your gift to the following account:</p>
@@ -15,10 +17,15 @@
 	</p>
 	{{ if .Guest.Attendance }}
     <p>Thanks so much, we're so happy that you can make it and we can't wait to celebrate our special day with you!</p>
-	{{ end }}
+	{{ else }}
     <p>Thanks so much!</p>
+	{{ end }}
+	</div>
   {{ end }}
+    <img class="spacer" src="assets/img/spacer.png" />
+	<div class="sub-container">
     <p>{{ .FooterMessage }} Built by <a href="https://michaelgv.uk">Michael</a></p>
+	</div>
   </div>
 </body>
 </html>

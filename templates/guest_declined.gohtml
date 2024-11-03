@@ -1,5 +1,10 @@
 {{ template "header" . }}
+<div class="sub-container">
   <h3>That's a shame you can't make it. We'll miss you on our big day! {{ .Guest.Name }} we'll have to see you another time instead!</h3>
   <p>If your plans have changed and you can join us <a href="/change-attendance-response">let us know here!</a></p>
+</div>
+  <img class="spacer" src="assets/img/spacer.png" />
+<div class="sub-container">
   <p><a href="/reset-guest">Click here if you need to RSVP for someone else.</a></p>
+</div>
 {{ template "footer" . }}
