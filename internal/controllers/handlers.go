@@ -184,17 +184,22 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 
 	dietaryRequirements := req.FormValue("dietary-requirements")
 	reDietaryRequirements := regexp.MustCompile(`^(?:(?:[\w'.,!\"#&()\-£$]{1,50})(?:\s+|$))+$`)
-	// if len(dietaryRequirements) > 0 {
-		if len(dietaryRequirements) > 500 || !reDietaryRequirements.MatchString(dietaryRequirements) {
-			c.logger.Println(fmt.Sprintf("dietaryRequirements %s for guestCode %s is invalid", dietaryRequirements, guest.Code))
-			if err := c.guestStore.UpdateSessionInvalidDietaryRequirements(guest.Code, true); err != nil {
-				c.logger.Printf("could not update session %s that dietary requirements are invalid: %v", guest.Code, err)
-			}
-			if err := c.guestStore.UpdateGuestInvalidDetails(guest.Code, true); err != nil {
-				c.logger.Printf("could not update that guest %s details are invalid: %v", guest.Code, err)
-			}
-			detailsAllValid = false
-		// }
+	dietaryRequirementsValid := true
+	switch {
+		case len(dietaryRequirements) > 500:
+		dietaryRequirementsValid = false
+		case len(dietaryRequirements) > 0 && !reDietaryRequirements.MatchString(dietaryRequirements):
+		dietaryRequirementsValid = false
+	}
+	if !dietaryRequirementsValid {
+		c.logger.Println(fmt.Sprintf("dietaryRequirements %s for guestCode %s is invalid", dietaryRequirements, guest.Code))
+		if err := c.guestStore.UpdateSessionInvalidDietaryRequirements(guest.Code, true); err != nil {
+			c.logger.Printf("could not update session %s that dietary requirements are invalid: %v", guest.Code, err)
+		}
+		if err := c.guestStore.UpdateGuestInvalidDetails(guest.Code, true); err != nil {
+			c.logger.Printf("could not update that guest %s details are invalid: %v", guest.Code, err)
+		}
+		detailsAllValid = false
 	} else {
 		if err := c.guestStore.UpdateSessionInvalidDietaryRequirements(guest.Code, false); err != nil {
 			c.logger.Printf("could not update session %s that dietary requirements are valid: %v", guest.Code, err)
@@ -209,9 +214,6 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 			return
 	}
 
-	if err := c.guestStore.UpdateSessionAllDetailsValid(guest.Code); err != nil {
-		c.logger.Printf("could not update session %s that all details are valid: %v", guest.Code, err)
-	}
 	if err := c.guestStore.UpdateGuestDetailsProvidedSuccessfully(guest.Code); err != nil {
 		c.logger.Printf("could not update guest %s details: %v", guest.Code, err)
 	}
@@ -236,7 +238,13 @@ func (c Controller) ChangeDetails(w http.ResponseWriter, req *http.Request) {
 		c.logger.Printf("for guest %v could not write guest cookie: %v\n", guest.Code, err)
 	}
 
+	sessionData, err := c.guestStore.GetSessionData(guest.Code)
+	if err != nil {
+		c.logger.Printf("for guest %v could not get session data: %v\n", guest.Code, err)
+	}
+
 	c.viewData.Guest = guest
+	c.viewData.SessionData = sessionData
 	c.guestStore.UpdatePageVisit(guest.ID, "change-details")
 
 	c.tpl.ExecuteTemplate(w, "guest_details.gohtml", c.viewData)

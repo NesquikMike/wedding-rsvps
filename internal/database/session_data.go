@@ -100,34 +100,6 @@ func (i GuestStore) UpdateSessionInvalidDietaryRequirements(code string, invalid
 	return nil
 }
 
-func (i GuestStore) UpdateSessionAllDetailsValid(code string) error {
-	query := `
-	INSERT INTO session_data (code, invalid_email, invalid_phone_number, invalid_dietary_requirements) 
-	VALUES (?, false, false, false)
-	ON CONFLICT(code)
-	DO UPDATE SET 
-      invalid_email = excluded.invalid_email
-	  invalid_phone_number = excluded.invalid_phone_number
-	  invalid_dietary_requirements = excluded.invalid_dietary_requirements;
-	`
-
-	result, err := i.db.Exec(query, code)
-	if err != nil {
-		return fmt.Errorf("failed to save session data: %v", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to retrieve affected rows: %v", err)
-	}
-
-	if rowsAffected != 1 {
-		return fmt.Errorf("rowsAffected %v for code %v with all valid details was not 1", rowsAffected, code)
-	}
-
-	return nil
-}
-
 func (i GuestStore) GetSessionData(code string) (*models.SessionData, error) {
 	query := `SELECT
 		invalid_email, invalid_phone_number, invalid_dietary_requirements 
