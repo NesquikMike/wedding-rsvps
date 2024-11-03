@@ -209,6 +209,9 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 			return
 	}
 
+	if err := c.guestStore.UpdateSessionAllDetailsValid(guest.Code); err != nil {
+		c.logger.Printf("could not update session %s that all details are valid: %v", guest.Code, err)
+	}
 	if err := c.guestStore.UpdateGuestDetailsProvidedSuccessfully(guest.Code); err != nil {
 		c.logger.Printf("could not update guest %s details: %v", guest.Code, err)
 	}

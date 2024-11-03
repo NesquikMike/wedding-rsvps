@@ -11,6 +11,11 @@
   <h4>Here are the details you provided in case you need to see them again:</h4>
   <p>Email: {{ .Guest.Email }}<br>
   Phone Number: {{ .Guest.PhoneNumber }}<br>
+  {{ if eq .Guest.MealChoice "meat" }}
+  Meal Choice: Steak & Ale Puff Pastry Pie<br>
+  {{ else if eq .Guest.MealChoice "vegetarian" }}
+  Meal Choice: Roasted Vegetable & Cheddar Wellington<br>
+  {{ end }}
   {{ if .Guest.DietaryRequirements }}
   Dietary Requirements: {{ .Guest.DietaryRequirements }}</p>
   {{ else }}

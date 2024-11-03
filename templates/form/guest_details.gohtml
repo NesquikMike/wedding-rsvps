@@ -1,29 +1,40 @@
 {{ define "form_guest_details" }}
   <form action="/guest-details" method="post">
     <label for="email" class="form-label">Your email address:</label><br>
-    <input type="text" id="email" name="email">
+    <input type="text" id="email" name="email" value="{{ .Guest.Email }}">
 	{{ if and .SessionData (eq .SessionData.InvalidEmail true)}}
 	<p class="red-warning">You did not enter a valid email address.<br>Please enter a valid email address.</p>
-	{{ end }}
+	{{ else }}
 	<br>
+	{{ end }}
     <label for="phone-number" class="form-label">Your phone number:</label><br>
-    <input type="text" id="phone-number" name="phone-number">
+    <input type="text" id="phone-number" name="phone-number" value="{{ .Guest.PhoneNumber }}">
 	{{ if and .SessionData (eq .SessionData.InvalidPhoneNumber true)}}
 	<p class="red-warning">You did not enter a valid phone number.<br>Please enter a valid phone number.</p>
+	{{ else }}
+	<br>
 	{{ end }}
-	<br>
     <label for="meal-choice" class="form-label">Meal Choice:</label><br>
-    <input type="radio" id="meat" name="meal-choice" value="meat" required/>
+    {{ if eq .Guest.MealChoice "meat" }}
+	<input type="radio" id="meat" name="meal-choice" value="meat" required checked/>
+	{{ else }}
+	<input type="radio" id="meat" name="meal-choice" value="meat" required/>
+	{{ end }}
 	<label for="meat">Steak & Ale Puff Pastry Pie</label><br>
+    {{ if eq .Guest.MealChoice "vegetarian" }}
+    <input type="radio" id="vegetarian" name="meal-choice" value="vegetarian" checked/>
+	{{ else }}
     <input type="radio" id="vegetarian" name="meal-choice" value="vegetarian" />
+	{{ end }}
 	<label for="vegetarian">Roasted Vegetable & Cheddar Wellington</label>
-	<br>
-    <label for="dietary-requirements" class="form-label">Any dietary requirements:</label><br>
-    <input type="text" id="dietary-requirements" name="dietary-requirements">
+	<p>Please note any meal adjustments in the Dietary Requirements section below.</p>
+    <label for="dietary-requirements" class="form-label">Dietary requirements:</label><br>
+    <input type="text" id="dietary-requirements" name="dietary-requirements" value="{{ .Guest.DietaryRequirements }}">
 	{{ if and .SessionData (eq .SessionData.InvalidDietaryRequirements true)}}
 	<p class="red-warning">You did not enter valid dietary requirements.<br>Please enter valid dietary requirements.</p>
-	{{ end }}
+	{{ else }}
 	<br>
+	{{ end }}
     <input type="submit" value="Submit">
   </form>
 {{ end }}
