@@ -12,9 +12,9 @@
   <p>Email: {{ .Guest.Email }}<br>
   Phone Number: {{ .Guest.PhoneNumber }}<br>
   {{ if eq .Guest.MealChoice "meat" }}
-  Meal Choice: Steak & Ale Puff Pastry Pie<br>
+  Meal Choice: Meat (contains beef, gluten & alcohol)<br>
   {{ else if eq .Guest.MealChoice "vegetarian" }}
-  Meal Choice: Roasted Vegetable & Cheddar Wellington<br>
+  Meal Choice: Vegetarian (contains gluten & cheese)<br>
   {{ end }}
   {{ if .Guest.DietaryRequirements }}
   Dietary Requirements: {{ .Guest.DietaryRequirements }}</p>

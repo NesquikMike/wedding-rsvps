@@ -20,13 +20,13 @@
 	{{ else }}
 	<input type="radio" id="meat" name="meal-choice" value="meat" required/>
 	{{ end }}
-	<label for="meat">Steak & Ale Puff Pastry Pie</label><br>
+	<label for="meat">Meat (contains beef, gluten & alcohol)</label><br>
     {{ if eq .Guest.MealChoice "vegetarian" }}
     <input type="radio" id="vegetarian" name="meal-choice" value="vegetarian" checked/>
 	{{ else }}
     <input type="radio" id="vegetarian" name="meal-choice" value="vegetarian" />
 	{{ end }}
-	<label for="vegetarian">Roasted Vegetable & Cheddar Wellington</label>
+	<label for="vegetarian">Vegetarian (contains gluten & cheese)</label>
 	<p>Please note any meal adjustments in the Dietary Requirements section below.</p>
     <label for="dietary-requirements" class="form-label">Dietary requirements:</label><br>
     <input type="text" id="dietary-requirements" name="dietary-requirements" value="{{ .Guest.DietaryRequirements }}">
