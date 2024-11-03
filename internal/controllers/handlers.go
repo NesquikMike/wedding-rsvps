@@ -183,7 +183,7 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 
 
 	dietaryRequirements := req.FormValue("dietary-requirements")
-	reDietaryRequirements := regexp.MustCompile(`^(?:(?:[\w'.,!\"#&()\-£$]{1,50})(?:\s+|$))+$`)
+	reDietaryRequirements := regexp.MustCompile(`^(?:(?:[A-Za-z'.,!\"#&()#\-£$\d*?/~@\[\]\{\}=+_^%|]{1,100})(?:\s+|$|\.))+$`)
 	dietaryRequirementsValid := true
 	switch {
 		case len(dietaryRequirements) > 500:
