@@ -140,16 +140,19 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 	email := req.FormValue("email")
 	if !strings.Contains(email, "@") || !strings.Contains(email, ".") || len(email) < 6 {
 		c.logger.Println(fmt.Sprintf("email %s for guestCode %s is invalid", email, guest.Code))
-		if err := c.guestStore.UpdateGuestInvalidDetails(guest.Code, true); err != nil {
-			c.logger.Printf("could not update that guest %s details are invalid: %v", guest.Code, err)
-		}
 		if err := c.guestStore.UpdateSessionInvalidEmail(guest.Code, true); err != nil {
 			c.logger.Printf("could not update session %s that email is invalid: %v", guest.Code, err)
+		}
+		if err := c.guestStore.UpdateGuestInvalidDetails(guest.Code, true); err != nil {
+			c.logger.Printf("could not update that guest %s details are invalid: %v", guest.Code, err)
 		}
 		detailsAllValid = false
 	} else {
 		if err := c.guestStore.UpdateSessionInvalidEmail(guest.Code, false); err != nil {
 			c.logger.Printf("could not update session %s that email is valid: %v", guest.Code, err)
+		}
+		if err := c.guestStore.UpdateGuestEmail(guest.Code, email); err != nil {
+			c.logger.Printf("could not update guest %s email: %v", guest.Code, err)
 		}
 	}
 
@@ -157,37 +160,47 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 	rePhoneNumber := regexp.MustCompile(`^[0-9+][0-9]+$`)
 	if !rePhoneNumber.MatchString(phoneNumber) {
 		c.logger.Println(fmt.Sprintf("phoneNumber %s for guestCode %s is invalid", phoneNumber, guest.Code))
-		if err := c.guestStore.UpdateGuestInvalidDetails(guest.Code, true); err != nil {
-			c.logger.Printf("could not update that guest %s details are invalid: %v", guest.Code, err)
-		}
 		if err := c.guestStore.UpdateSessionInvalidPhoneNumber(guest.Code, true); err != nil {
 			c.logger.Printf("could not update session %s that phone number is invalid: %v", guest.Code, err)
+		}
+		if err := c.guestStore.UpdateGuestInvalidDetails(guest.Code, true); err != nil {
+			c.logger.Printf("could not update that guest %s details are invalid: %v", guest.Code, err)
 		}
 		detailsAllValid = false
 	} else {
 		if err := c.guestStore.UpdateSessionInvalidPhoneNumber(guest.Code, false); err != nil {
 			c.logger.Printf("could not update session %s that phone number is valid: %v", guest.Code, err)
 		}
+		if err := c.guestStore.UpdateGuestPhoneNumber(guest.Code, phoneNumber); err != nil {
+			c.logger.Printf("could not update guest %s phone number: %v", guest.Code, err)
+		}
 	}
 
 	mealChoice := req.FormValue("meal-choice")
+	if err := c.guestStore.UpdateGuestMealChoice(guest.Code, mealChoice); err != nil {
+		c.logger.Printf("could not update guest %s meal choice: %v", guest.Code, err)
+	}
+
 
 	dietaryRequirements := req.FormValue("dietary-requirements")
 	reDietaryRequirements := regexp.MustCompile(`^(?:(?:[\w'.,!\"#&()\-£$]{1,50})(?:\s+|$))+$`)
 	// if len(dietaryRequirements) > 0 {
 		if len(dietaryRequirements) > 500 || !reDietaryRequirements.MatchString(dietaryRequirements) {
 			c.logger.Println(fmt.Sprintf("dietaryRequirements %s for guestCode %s is invalid", dietaryRequirements, guest.Code))
-			if err := c.guestStore.UpdateGuestInvalidDetails(guest.Code, true); err != nil {
-				c.logger.Printf("could not update that guest %s details are invalid: %v", guest.Code, err)
-			}
 			if err := c.guestStore.UpdateSessionInvalidDietaryRequirements(guest.Code, true); err != nil {
 				c.logger.Printf("could not update session %s that dietary requirements are invalid: %v", guest.Code, err)
+			}
+			if err := c.guestStore.UpdateGuestInvalidDetails(guest.Code, true); err != nil {
+				c.logger.Printf("could not update that guest %s details are invalid: %v", guest.Code, err)
 			}
 			detailsAllValid = false
 		// }
 	} else {
 		if err := c.guestStore.UpdateSessionInvalidDietaryRequirements(guest.Code, false); err != nil {
 			c.logger.Printf("could not update session %s that dietary requirements are valid: %v", guest.Code, err)
+		}
+		if err := c.guestStore.UpdateGuestDietaryRequirements(guest.Code, dietaryRequirements); err != nil {
+			c.logger.Printf("could not update guest %s dietary requirements: %v", guest.Code, err)
 		}
 	}
 
@@ -196,7 +209,7 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 			return
 	}
 
-	if err := c.guestStore.UpdateGuestDetails(guest.Code, email, phoneNumber, mealChoice, dietaryRequirements); err != nil {
+	if err := c.guestStore.UpdateGuestDetailsProvidedSuccessfully(guest.Code); err != nil {
 		c.logger.Printf("could not update guest %s details: %v", guest.Code, err)
 	}
 

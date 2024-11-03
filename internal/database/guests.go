@@ -114,19 +114,107 @@ func (i GuestStore) InsertGuest(name string) error {
 	return err
 }
 
-func (i GuestStore) UpdateGuestDetails(code, email, phoneNumber, mealChoice, dietaryRequirements string) error {
+func (i GuestStore) UpdateGuestEmail(code, email string) error {
 	query := `UPDATE guests
               SET
-				email = ?,
-				phone_number = ?, 
-				meal_choice = ?, 
-				dietary_requirements = ?, 
+				email = ?
+              WHERE code = ?`
+
+	result, err := i.db.Exec(query, email, code)
+	if err != nil {
+		return fmt.Errorf("failed to update guest %v email %v: %v", code, email, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve affected rows: %v", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no guest found with code %s", code)
+	}
+
+	return nil
+}
+
+func (i GuestStore) UpdateGuestPhoneNumber(code, phoneNumber string) error {
+	query := `UPDATE guests
+              SET
+				phone_number = ? 
+              WHERE code = ?`
+
+	result, err := i.db.Exec(query, phoneNumber, code)
+	if err != nil {
+		return fmt.Errorf("failed to update guest %v phone number %v: %v", code, phoneNumber, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve affected rows: %v", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no guest found with code %s", code)
+	}
+
+	return nil
+}
+
+func (i GuestStore) UpdateGuestMealChoice(code, mealChoice string) error {
+	query := `UPDATE guests
+              SET
+				meal_choice = ? 
+              WHERE code = ?`
+
+	result, err := i.db.Exec(query, mealChoice, code)
+	if err != nil {
+		return fmt.Errorf("failed to update guest %v meal choice %v: %v", code, mealChoice, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve affected rows: %v", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no guest found with code %s", code)
+	}
+
+	return nil
+}
+
+func (i GuestStore) UpdateGuestDietaryRequirements(code, dietaryRequirements string) error {
+	query := `UPDATE guests
+              SET
+				dietary_requirements = ? 
+              WHERE code = ?`
+
+	result, err := i.db.Exec(query, dietaryRequirements, code)
+	if err != nil {
+		return fmt.Errorf("failed to update guest %v dietary requirements %v: %v", code, dietaryRequirements, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve affected rows: %v", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no guest found with code %s", code)
+	}
+
+	return nil
+}
+
+func (i GuestStore) UpdateGuestDetailsProvidedSuccessfully(code string) error {
+	query := `UPDATE guests
+              SET
 				invalid_details = false, 
 				details_provided = true, 
 				form_completed = true 
               WHERE code = ?`
 
-	result, err := i.db.Exec(query, email, phoneNumber, mealChoice, dietaryRequirements, code)
+	result, err := i.db.Exec(query, code)
 	if err != nil {
 		return fmt.Errorf("failed to update guest: %v", err)
 	}
