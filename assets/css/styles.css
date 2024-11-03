@@ -78,29 +78,38 @@ body {
 	max-width: 1080px;
 }
 
+.title {
+	display: grid;
+	grid-template-columns: 1fr;
+	justify-items: center;
+	margin: 0vh 10.472vw;
+	overflow-wrap: break-word;
+	word-break: break-word;
+}
+
 img {
 	width: 100%;
 	margin: 8px 0px;
 }
 
 p {
-	margin: 8px 0px;
+	margin: 1vh 0vw;
 }
 
 h1 {
-	margin: 40px 0px;
+	margin: 5.236vh 0vw;
 }
 
 h2 {
-	margin: 16px 0px;
+	margin: 3.236vh 0vw;
 }
 
 h3 {
-	margin: 16px 0px;
+	margin: 2vh 0vw;
 }
 
 h4 {
-	margin: 16px 0px;
+	margin: 1vh 0vw;
 }
 
 .red-warning {

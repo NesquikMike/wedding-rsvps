@@ -2,9 +2,9 @@
   {{ if and .Guest .Guest.FormCompleted }}
     <h4>Wedding Gifts:</h4>
 	{{ if .Guest.Attendance }}
-    <p>Your presence is a gift in itself, but if you would like to give something, we'd love a cash gift.</p>
+    <p>Having you there with us is the greatest gift of all. Therefore we're not expecting any gifts. However if you would like to give a contribution towards our future together, we would be so grateful. You can bring a cash gift on the day, or if you'd prefer, you can send your gift to the following account:</p>
 	{{ else }}
-    <p>Since you can't make it, if you would like to give something, we'd love a cash gift.</p>
+    <p>If you would like to give a contribution towards our future together, we would be so grateful. You can send your gift to the following account:</p>
 	{{ end }}
     <p>
 	  You can send your gift to this account:<br>
@@ -14,9 +14,9 @@
       Account Number: {{ .BankAccountNumber }}
 	</p>
 	{{ if .Guest.Attendance }}
-    <p>You can also gift cash in an envelope on the day if you prefer.</p>
+    <p>Thanks so much, we're so happy that you can make it and we can't wait to celebrate our special day with you!</p>
 	{{ end }}
-    <p>Many Thanks!</p>
+    <p>Thanks so much!</p>
   {{ end }}
     <p>{{ .FooterMessage }} Built by <a href="https://michaelgv.uk">Michael</a></p>
   </div>

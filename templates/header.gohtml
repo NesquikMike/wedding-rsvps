@@ -27,12 +27,11 @@
 
 <body>
   <div class="container">
-    <h1>You're invited to {{ .PartnerOne }} & {{ .PartnerTwo }}'s Wedding!</h1>
-    <br>
+	<div class="title">
+    <h1>You're invited to {{ .PartnerOne }} &<wbr> {{ .PartnerTwo }}'s Wedding!</h1>
     <h2>{{ .Date }}</h2>
-    <br>
     <h3>{{ .VenueVague }} from {{ .TimeArrival }}</h3>
-    <br>
+	</div>
     <img src="assets/img/{{ .MainPhotoFileName }}" alt="The Happy Couple" />
     <br>
 {{ end }}
