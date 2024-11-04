@@ -181,16 +181,15 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 		c.logger.Printf("could not update guest %s meal choice: %v", guest.Code, err)
 	}
 
-
 	// Normalize the input
 	dietaryRequirements := strings.ReplaceAll(req.FormValue("dietary-requirements"), "\n", " ")
 	dietaryRequirements = strings.TrimSpace(dietaryRequirements)
 	reDietaryRequirements := regexp.MustCompile(`^(?:(?:[A-Za-z'.,!\"#&()\-£$\d*?/~@\[\]\{\}=+_^%|]{1,100})(?:\s+|$|\.))*(?:[A-Za-z'.,!\"#&()\-£$\d*?/~@\[\]\{\}=+_^%|]{1,100})$`)
 	dietaryRequirementsValid := true
 	switch {
-		case len(dietaryRequirements) > 500:
+	case len(dietaryRequirements) > 500:
 		dietaryRequirementsValid = false
-		case len(dietaryRequirements) > 0 && !reDietaryRequirements.MatchString(dietaryRequirements):
+	case len(dietaryRequirements) > 0 && !reDietaryRequirements.MatchString(dietaryRequirements):
 		dietaryRequirementsValid = false
 	}
 	if !dietaryRequirementsValid {
@@ -212,8 +211,8 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if !detailsAllValid {
-			http.Redirect(w, req, "/", http.StatusFound)
-			return
+		http.Redirect(w, req, "/", http.StatusFound)
+		return
 	}
 
 	if err := c.guestStore.UpdateGuestDetailsProvidedSuccessfully(guest.Code); err != nil {

@@ -12,7 +12,10 @@ import (
 	"strings"
 )
 
-const SessionTokenName = "session-token"
+const (
+	SessionTokenName = "session-token"
+	yearInSeconds    = 365 * 24 * 60 * 60
+)
 
 var (
 	ErrValueTooLong = errors.New("cookie value too long")
@@ -24,7 +27,7 @@ func GenerateCookie(name, value string, isProd bool) *http.Cookie {
 		Name:     name,
 		Value:    value,
 		Path:     "/",
-		MaxAge:   3600,
+		MaxAge:   yearInSeconds,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	}
