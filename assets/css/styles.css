@@ -82,15 +82,15 @@ body {
 	display: grid;
 	grid-template-columns: 1fr;
 	justify-items: center;
-	margin: 0vh 10.472vw;
+	margin: 0vh 2vw;
 	overflow-wrap: break-word;
 	word-break: break-word;
 }
 
 .spacer {
-	margin: 0vh 10.472vw;
+	margin: 1vh 10.472vw 0vh 10.472vw;
 	max-width: 79.056vw;
-	height: 4vh;
+	height: 10vh;
 	width: auto;
 }
 
