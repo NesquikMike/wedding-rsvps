@@ -182,7 +182,9 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 	}
 
 
-	dietaryRequirements := req.FormValue("dietary-requirements")
+	// Normalize the input
+	dietaryRequirements := strings.ReplaceAll(req.FormValue("dietary-requirements"), "\n", " ")
+	dietaryRequirements = strings.TrimSpace(dietaryRequirements)
 	reDietaryRequirements := regexp.MustCompile(`^(?:(?:[A-Za-z'.,!\"#&()#\-£$\d*?/~@\[\]\{\}=+_^%|]{1,100})(?:\s+|$|\.))+$`)
 	dietaryRequirementsValid := true
 	switch {
