@@ -137,7 +137,8 @@ h4 {
 }
 
 #dietary-requirements {
-	max-width: 75%;
+	max-width: 75vw;
 	height: 72px;
 	font-family: sans-serif;
+	width: 250px;
 }
