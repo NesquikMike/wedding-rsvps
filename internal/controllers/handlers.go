@@ -184,7 +184,7 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 	// Normalize the input
 	dietaryRequirements := strings.ReplaceAll(req.FormValue("dietary-requirements"), "\n", " ")
 	dietaryRequirements = strings.TrimSpace(dietaryRequirements)
-	reDietaryRequirements := regexp.MustCompile(`^(?:(?:[A-Za-z'.,!\"#&()\-£$\d*?/~@\[\]\{\}=+_^%|]{1,100})(?:\s+|$|\.))*(?:[A-Za-z'.,!\"#&()\-£$\d*?/~@\[\]\{\}=+_^%|]{1,100})$`)
+	reDietaryRequirements := regexp.MustCompile(`^(?:(?:[A-Za-z’\'\.\,!\"#&()\-£$\d*?/~@\[\]\{\}=+_^%|]{1,100})(?:\s+|$|\.))*(?:[A-Za-z\'’\.\,!\"#&()\-£$\d*?/~@\[\]\{\}=+_^%|]{1,100})$`)
 	dietaryRequirementsValid := true
 	switch {
 	case len(dietaryRequirements) > 500:
