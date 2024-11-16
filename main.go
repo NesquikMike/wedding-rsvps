@@ -256,7 +256,7 @@ func startMidnightTicker(s3Uploader *backup.S3Uploader, oldLogFile *os.File) {
 }
 
 func performBackups(s3Uploader *backup.S3Uploader) error {
-	ydayDate := time.Now().Add(backupTimeInterval).Format("2006-01-02")
+	ydayDate := time.Now().Add(-backupTimeInterval).Format("2006-01-02")
 	oldLogFileName := fmt.Sprintf("logs/server_%s.log", ydayDate)
 	err := s3Uploader.UploadFile(oldLogFileName, oldLogFileName)
 	if err != nil {
