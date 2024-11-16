@@ -157,6 +157,7 @@ func (c Controller) GuestDetails(w http.ResponseWriter, req *http.Request) {
 	}
 
 	phoneNumber := req.FormValue("phone-number")
+	phoneNumber = strings.ReplaceAll(phoneNumber, " ", "")
 	rePhoneNumber := regexp.MustCompile(`^[0-9+][0-9]+$`)
 	if !rePhoneNumber.MatchString(phoneNumber) {
 		c.logger.Println(fmt.Sprintf("phoneNumber %s for guestCode %s is invalid", phoneNumber, guest.Code))
